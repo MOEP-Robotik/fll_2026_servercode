@@ -1,0 +1,14 @@
+{
+    "require": {
+        "mailgun/mailgun-php": "^4.3",
+        "symfony/http-client": "^8.0",
+        "nyholm/psr7": "^1.8",
+        "vlucas/phpdotenv": "^5.6",
+        "firebase/php-jwt": "^7.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
