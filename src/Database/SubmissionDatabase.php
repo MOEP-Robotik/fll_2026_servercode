@@ -11,14 +11,21 @@ class SubmissionDatabase {
         $this->db = Database::get();
     }
 
-    public function create(array $data): int
+    public function create(Submission $data): int
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (title, description) VALUES (:t, :d)"
+            "INSERT INTO submissions (title, description, location, email) VALUES (:t, :d, :l, :e)"
         );
+        $location = json_encode([
+            'lon' => $data['lon'],
+            'lat' => $data['lat']
+        ]);
+        #TODO: irgendwo filepath generieren und dann einfügen
         $stmt->execute([
             ':t' => $data['title'],
-            ':d' => $data['description'] ?? ''
+            ':d' => $data['description'] ?? '',
+            ':l' => $location,
+            ':e' => $data['email']
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -31,7 +38,7 @@ class SubmissionDatabase {
         $submissions = [];
         foreach ($rows as $row) {
             $coordData = json_decode($row['location'], true);
-            $location = new Coordinate($coordData['lon'], $coordData['´lon']);
+            $location = new Coordinate($coordData['lon'], $coordData['lat']);
 
             $submissions[] = new Submission(
                 (int)$row['id'],
@@ -51,6 +58,17 @@ class SubmissionDatabase {
         $stmt->execute([
             ':id' => $id
         ]);
-        return $stmt->fetch();
+        $row = $stmt->fetch();
+        $coordData = json_decode($row['location'], true);
+        $location = new Coordinate($coordData['lon'], $coordData['lat']);
+        return new Submission(
+            (int)$row['id'],
+            (string)$row['title'],
+            (string)$row['description'],
+            $location,
+            (string)$row['email'],
+            (string)$row['filepath'],
+            (string)$row['timestamp']
+        );
     }
 }
