@@ -21,4 +21,17 @@ class SubmissionDatabase {
 
         return (int)$this->db->lastInsertId();
     }
+
+    public function getAll(): array {
+        $stmt = $this->db->query("SELECT * FROM submissions");
+        return $stmt->fetchAll();
+    }
+
+    public function getById(int $id): array | false {
+        $stmt = $this->db->prepare("SELECT * FROM submissions WHERE id = :id");
+        $stmt->execute([
+            ':id' => $id
+        ]);
+        return $stmt->fetch();
+    }
 }

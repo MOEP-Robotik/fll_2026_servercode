@@ -17,10 +17,12 @@ php -S localhost:8000 -t public
 Fertig! Die API kann nun aufgerufen werden unter `http://localhost:8000`. Nur sehr uninteressant ohne frontend...
 
 ## Routen
-- `/api/health`
-- `/api/submissions`
+- `GET /api/health`
+- `GET /api/submissions`
+- `POST /api/submissions`
+- `GET /api/submissions/{id}`
 
-## Ein fund beitragen
+## Ein Fund beitragen
 ```bash
 curl -X POST http://localhost:8000/api/submissions \
             -H "Content-Type: application/json" \
