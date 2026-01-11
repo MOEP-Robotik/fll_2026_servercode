@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS submissions (
     title TEXT NOT NULL,
     description TEXT,
     location TEXT,
-    period_guess TEXT,
     email TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -46,7 +45,6 @@ CREATE TABLE IF NOT EXISTS submissions (
 CREATE TABLE IF NOT EXISTS analysis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     submission_id INTEGER NOT NULL,
-    period TEXT,
     material TEXT,
     confidence REAL,
     notes TEXT,
