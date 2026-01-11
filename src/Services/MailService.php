@@ -21,8 +21,8 @@ class MailService
 
     public function sendConfirmation(string $email): void
     {
-        $this->mg->messages()->send('lumentae.dev', [
-            'from'    => 'fllforschung@lumentae.dev',
+        $this->mg->messages()->send($_ENV['MAILGUN_DOMAIN'], [
+            'from'    => $_ENV['MAILGUN_SENDER'],
             'to'      => $email,
             'subject' => 'The PHP SDK is awesome!',
             'text'    => 'It is so simple to send a message.'
