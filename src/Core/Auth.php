@@ -1,6 +1,7 @@
 <?php
-
 namespace Core;
+
+require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use Firebase\JWT\JWT;

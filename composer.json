@@ -10,5 +10,13 @@
         "allow-plugins": {
             "php-http/discovery": true
         }
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "src/Core/",
+            "Database\\": "src/Database/",
+            "Models\\": "src/Models/",
+            "Services\\": "src/Services/"
+        }
     }
 }
