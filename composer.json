@@ -16,7 +16,8 @@
             "Core\\": "src/Core/",
             "Database\\": "src/Database/",
             "Models\\": "src/Models/",
-            "Services\\": "src/Services/"
+            "Services\\": "src/Services/",
+            "Controllers\\": "src/Controllers/"
         }
     }
 }
