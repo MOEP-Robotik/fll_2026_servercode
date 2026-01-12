@@ -1,10 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../src/Core/Request.php';
-require_once __DIR__ . '/../src/Core/Response.php';
-
 use Core\Request;
 use Core\Response;
+use Controllers\SubmissionController;
 
 $request = new Request();
 

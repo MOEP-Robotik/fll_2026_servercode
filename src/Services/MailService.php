@@ -1,4 +1,6 @@
 <?php
+namespace Service;
+
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Mailgun\Mailgun;

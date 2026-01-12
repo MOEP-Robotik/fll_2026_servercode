@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__  . './Coordinate.php';
+namespace Models;
+
 /*
 Submissions (DB):
     id: int (von DB generiert)
@@ -16,6 +17,6 @@ class Submission {
     public string $description;
     public Coordinate $coordinate;
     public string $email;
-    public string | null $filepath;
+    public array | null $files;
     public string | null $timestamp;
 }

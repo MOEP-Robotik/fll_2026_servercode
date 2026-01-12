@@ -1,4 +1,6 @@
 <?php
+namespace Models;
+
 /*
 Analysis (DB):
     id: int (von DB generiert)

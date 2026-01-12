@@ -1,7 +1,9 @@
 <?php
-require_once __DIR__ . '/../Core/Database.php';
-require_once __DIR__ . '/../Models/Submission.php';
-require_once __DIR__ . '/../Models/Coordinate.php';
+namespace Database;
+
+use Core\Database;
+use Models\Coordinate;
+use Models\Submission;
 
 class SubmissionDatabase {
     private $db;
@@ -20,7 +22,7 @@ class SubmissionDatabase {
             'lon' => $data['lon'],
             'lat' => $data['lat']
         ]);
-        #TODO: irgendwo filepath generieren und dann einfügen
+        #TODO: irgendwo file-UUIDs generieren und in array speichern und dann einfügen
         $stmt->execute([
             ':t' => $data['title'],
             ':d' => $data['description'] ?? '',
@@ -46,7 +48,7 @@ class SubmissionDatabase {
                 (string)$row['description'],
                 $location,
                 (string)$row['email'],
-                (string)$row['filepath'],
+                (array)$row['files'],
                 (string)$row['timestamp']
             );
         }

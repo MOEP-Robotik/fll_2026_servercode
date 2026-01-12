@@ -1,4 +1,6 @@
 <?php
+namespace Models;
+
 /*
 Coordinate:
     longitude (lon)

@@ -1,9 +1,11 @@
 <?php
+namespace Controllers;
+
 use Core\Request;
 use Core\Response;
-
-require_once __DIR__ . '/../Database/SubmissionDatabase.php';
-require_once __DIR__ . '/../Services/MailService.php';
+use Models\Submission;
+use Database\SubmissionDatabase;
+use Servie\MailService;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -21,7 +23,8 @@ class SubmissionController {
         }
 
         $repo = new SubmissionDatabase();
-        $id = $repo->create($data);
+        $submiss = new Submission();
+        $id = $repo->create($submiss);
 
         // TODO: Enable in production
         // (new MailService())->sendConfirmation($data['email']);
