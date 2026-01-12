@@ -22,7 +22,7 @@ class SubmissionDatabase {
             'lon' => $data['lon'],
             'lat' => $data['lat']
         ]);
-        #TODO: irgendwo file-UUIDs generieren und in array speichern und dann einfügen
+        //TODO: irgendwo file-UUIDs generieren und in array speichern und dann einfügen
         $stmt->execute([
             ':t' => $data['title'],
             ':d' => $data['description'] ?? '',
@@ -33,7 +33,7 @@ class SubmissionDatabase {
         return (int)$this->db->lastInsertId();
     }
 
-    #returns Array with Submissions
+    //returns Array with Submissions
     public function getAll(): array {
         $stmt = $this->db->query("SELECT * FROM submissions");
         $rows = $stmt->fetchAll();

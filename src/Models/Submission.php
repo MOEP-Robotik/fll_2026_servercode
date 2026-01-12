@@ -8,7 +8,7 @@ Submissions (DB):
     description: text
     location: coordinate
     email: text
-    filepath: text
+    files: text
     created_at: timestamp (von DB generiert)
 */
 class Submission {

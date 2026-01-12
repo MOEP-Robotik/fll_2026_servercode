@@ -23,7 +23,7 @@ class SubmissionController {
         }
 
         $repo = new SubmissionDatabase();
-        $submiss = new Submission();
+        $submiss = new Submission($data['id'] ?? null, $data['title'], $data['description'], $data['coordinate'], $data['email'], $data['files'] ?? null, $data['timestamp'] ?? null);
         $id = $repo->create($submiss);
 
         // TODO: Enable in production

@@ -12,7 +12,6 @@ switch ($request->path()) {
         break;
     default:
         if (str_starts_with($request->path(), "/api/submissions")) {
-            require_once __DIR__ . '/../src/Controllers/SubmissionController.php';
             $controller = new SubmissionController();
             $controller->submit($request);
             break;
