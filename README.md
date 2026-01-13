@@ -22,14 +22,17 @@ Fertig! Die API kann nun aufgerufen werden unter `http://localhost:8000`. Nur se
 - `POST /api/submissions`
 - `GET /api/submissions/{id}`
 
-## Ein Fund beitragen
+## Einen Fund beitragen
 ```bash
 curl -X POST http://localhost:8000/api/submissions \
-            -H "Content-Type: application/json" \
-            -d '{
-          "title": "Name des Funds",
-          "description": "Wo gefunden?",
-          "location": "Köln",
-          "email": "example@example.com"
-        }'
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Bronze fibula 5",
+    "description": "Found near river bank during construction work",
+    "coordinate": {
+      "lon": 6.9603,
+      "lat": 50.9375
+    },
+    "email": "example@example.com"
+  }'
 ```
