@@ -1,8 +1,6 @@
 <?php
 namespace Database;
 
-require __DIR__ . '/../../vendor/autoload.php';
-
 use Core\Database;
 use Models\Coordinate;
 use Models\Submission;
@@ -21,15 +19,15 @@ class SubmissionDatabase {
             "INSERT INTO submissions (title, description, location, email) VALUES (:t, :d, :l, :e)"
         );
         $location = json_encode([
-            'lon' => $data['lon'],
-            'lat' => $data['lat']
+            'lon' => $data->coordinate->lon,
+            'lat' => $data->coordinate->lat
         ]);
         //TODO: irgendwo file-UUIDs generieren und in array speichern und dann einfügen
         $stmt->execute([
-            ':t' => $data['title'],
-            ':d' => $data['description'] ?? '',
+            ':t' => $data->title,
+            ':d' => $data->description ?? '',
             ':l' => $location,
-            ':e' => $data['email']
+            ':e' => $data->email
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -42,17 +40,20 @@ class SubmissionDatabase {
         $submissions = [];
         foreach ($rows as $row) {
             $coordData = json_decode($row['location'], true);
-            $location = new Coordinate($coordData['lon'], $coordData['lat']);
+            $location = new Coordinate();
+            $location->lon = (float)$coordData['lon'];
+            $location->lat = (float)$coordData['lat'];
 
-            $submissions[] = new Submission(
-                (int)$row['id'],
-                (string)$row['title'],
-                (string)$row['description'],
-                $location,
-                (string)$row['email'],
-                (array)$row['files'],
-                (string)$row['timestamp']
-            );
+            $submission = new Submission();
+            $submission->id = (int)$row['id'];
+            $submission->title = (string)$row['title'];
+            $submission->description = (string)$row['description'];
+            $submission->coordinate = $location;
+            $submission->email = (string)$row['email'];
+            $submission->files = $row['files'] ? (array)$row['files'] : null;
+            $submission->timestamp = (string)$row['timestamp'];
+
+            $submissions[] = $submission;
         }
         return $submissions;
     }
@@ -63,16 +64,23 @@ class SubmissionDatabase {
             ':id' => $id
         ]);
         $row = $stmt->fetch();
+        if (!$row) {
+            return false;
+        }
         $coordData = json_decode($row['location'], true);
-        $location = new Coordinate($coordData['lon'], $coordData['lat']);
-        return new Submission(
-            (int)$row['id'],
-            (string)$row['title'],
-            (string)$row['description'],
-            $location,
-            (string)$row['email'],
-            (string)$row['filepath'],
-            (string)$row['timestamp']
-        );
+        $location = new Coordinate();
+        $location->lon = (float)$coordData['lon'];
+        $location->lat = (float)$coordData['lat'];
+
+        $submission = new Submission();
+        $submission->id = (int)$row['id'];
+        $submission->title = (string)$row['title'];
+        $submission->description = (string)$row['description'];
+        $submission->coordinate = $location;
+        $submission->email = (string)$row['email'];
+        $submission->files = $row['filepath'] ? (array)$row['filepath'] : null;
+        $submission->timestamp = (string)$row['timestamp'];
+
+        return $submission;
     }
 }

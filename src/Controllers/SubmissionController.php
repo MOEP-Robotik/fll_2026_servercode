@@ -1,13 +1,12 @@
 <?php
 namespace Controllers;
 
-require __DIR__ . '/../../vendor/autoload.php';
-
 use Core\Request;
 use Core\Response;
 use Models\Submission;
+use Models\Coordinate;
 use Database\SubmissionDatabase;
-use Servie\MailService;
+use Services\MailService;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -24,8 +23,24 @@ class SubmissionController {
             Response::json(['message' => 'Title missing'], 400);
         }
 
+        if (empty($data['coordinate']) || empty($data['coordinate']['lon']) || empty($data['coordinate']['lat'])) {
+            Response::json(['message' => 'Coordinate missing or invalid'], 400);
+        }
+
+        $coordinate = new Coordinate();
+        $coordinate->lon = (float)$data['coordinate']['lon'];
+        $coordinate->lat = (float)$data['coordinate']['lat'];
+
+        $submiss = new Submission();
+        $submiss->id = $data['id'] ?? null;
+        $submiss->title = $data['title'];
+        $submiss->description = $data['description'] ?? '';
+        $submiss->coordinate = $coordinate;
+        $submiss->email = $data['email'];
+        $submiss->files = $data['files'] ?? null;
+        $submiss->timestamp = $data['timestamp'] ?? null;
+
         $repo = new SubmissionDatabase();
-        $submiss = new Submission($data['id'] ?? null, $data['title'], $data['description'], $data['coordinate'], $data['email'], $data['files'] ?? null, $data['timestamp'] ?? null);
         $id = $repo->create($submiss);
 
         // TODO: Enable in production

@@ -1,33 +1,27 @@
 <?php
-namespace Service;
+namespace Services;
 
-require __DIR__ . '/../../vendor/autoload.php';
-
-use Mailgun\Mailgun;
 use Dotenv\Dotenv;
 
 class MailService
 {
-    private Mailgun $mg;
+    private \Resend\Client $resend;
 
     public function __construct()
     {
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
 
-        $this->mg = Mailgun::create(
-            $_ENV['MAILGUN_API_KEY'],
-            'https://api.eu.mailgun.net'
-        );
+        $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
     }
 
-    public function sendConfirmation(string $email): void
+    public function sendConfirmation(string $email, string $title): void
     {
-        $this->mg->messages()->send($_ENV['MAILGUN_DOMAIN'], [
-            'from'    => $_ENV['MAILGUN_SENDER'],
+        $this->resend->emails->send([
+            'from'    => $_ENV['EMAIL_SENDER'],
             'to'      => $email,
-            'subject' => 'The PHP SDK is awesome!',
-            'text'    => 'It is so simple to send a message.'
+            'subject' => 'FLL 2026 - ' . $title . ' hinzugefügt',
+            'html'    => '<p>Dein Fund "' . $title . '" wurde erfolgreich hinzugefügt.</p>'
         ]);
     }
 }
