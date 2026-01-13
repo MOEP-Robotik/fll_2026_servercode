@@ -1,7 +1,7 @@
 <?php
 namespace Controllers;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Request;
 use Core\Response;

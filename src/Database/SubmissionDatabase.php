@@ -1,7 +1,7 @@
 <?php
 namespace Database;
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Database;
 use Models\Coordinate;
