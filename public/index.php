@@ -4,6 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Core\Request;
 use Core\Response;
 use Controllers\SubmissionController;
+use Controllers\AuthController;
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     Response::handleOptionsRequest();
@@ -20,6 +21,9 @@ switch ($request->path()) {
             $controller = new SubmissionController();
             $controller->submit($request);
             break;
+        } elseif (str_starts_with($request->path(), "/api/login")) {
+            $controller = new AuthController();
+            //$controller->login_request(parameter, die gesendet werden)
         }
         Response::json(['error' => 'Not found'], 404);
 }
