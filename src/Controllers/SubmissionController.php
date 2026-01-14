@@ -43,8 +43,7 @@ class SubmissionController {
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
 
-        // TODO: Enable in production
-        // (new MailService())->sendConfirmation($data['email']);
+        (new MailService())->sendConfirmation($data['email'], $data['title']);
 
         Response::json(['id' => $id]);
     }
