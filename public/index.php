@@ -5,6 +5,10 @@ use Core\Request;
 use Core\Response;
 use Controllers\SubmissionController;
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    Response::handleOptionsRequest();
+}
+
 $request = new Request();
 
 switch ($request->path()) {
