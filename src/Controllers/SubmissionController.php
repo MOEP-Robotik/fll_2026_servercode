@@ -37,8 +37,10 @@ class SubmissionController {
         $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
         $submiss->email = $data['email'];
+        $submiss->address = $data['address'];
+        $submiss->telephone = $data['telephone'];
+        $submiss->date = $data['date'];
         $submiss->files = $data['files'] ?? null;
-        $submiss->timestamp = $data['timestamp'] ?? null;
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);

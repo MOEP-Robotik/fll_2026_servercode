@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS submissions (
     description TEXT,
     location TEXT,
     email TEXT,
+    telephone TEXT,
+    address TEXT,
+    date TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
