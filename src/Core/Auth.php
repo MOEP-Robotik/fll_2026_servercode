@@ -23,15 +23,14 @@ class Auth {
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expire,
-            'iss' => 'priarch', //unser erster Development Name (Danke an Benjamin)
+            'iss' => 'priarch', //unser erster Development Name (Danke an @imnotmaster)
             'sub' => $user_id
         ];
 
         return JWT::encode($payload, $this->jwtkey, 'HS256');
     }
 
-    public function validate_JWT(string $token): bool
-    {
+    public function validate_JWT(string $token): bool {
         try {
             JWT::decode($token, new Key($this->jwtkey, 'HS256'));
             return true;
@@ -40,8 +39,7 @@ class Auth {
         }
     }
 
-    public function getUserIdFromJWT(string $token): ?int
-    {
+    public function getUserIdFromJWT(string $token): ?int {
         try {
             $decoded = JWT::decode($token, new Key($this->jwtkey, 'HS256'));
             return $decoded->sub ?? null;
