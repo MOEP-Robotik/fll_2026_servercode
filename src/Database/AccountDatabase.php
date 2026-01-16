@@ -1,0 +1,56 @@
+<?php
+namespace Database;
+
+require __DIR__ . '/../../vendor/autoload.php'; //Muss das wirklich so darein?
+
+use Core\Database;
+use Models\Account;
+use Models\PartialAccount;
+
+class AccountDatabase{
+    private $db;
+
+    public function __construct()
+    {
+        $this->db = Database::get();
+    }
+    public function getByemail(string $email): PartialAccount | false{
+        $stmt = $this->db->prepare("SELECT id, passhash FROM users WHERE email = :email LIMIT 1;");
+        $stmt->execute([
+            ":email" => $email
+        ]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return false;
+        }
+        $account = new PartialAccount();
+        $account['id'] = $row['id'];
+        $account['passhash'] = $row['passhash'];
+
+        return $account;
+    }
+
+    public function getById(int $id): Account | false
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1;");
+        $stmt->execute([
+            ':id' => $id
+        ]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return false;
+        }
+
+        $account = new Account();
+        $account['id'] = $row['id'];
+        $account['vorname'] = $row['vorname'];
+        $account['nachname'] = $row['nachname'];
+        $account['passhash'] = $row['passhash'];
+        $account['plz'] = $row['plz'];
+        $account['email'] = $row['email'];
+        $account['telefonnummer'] = $row['telefonnummer'];
+        $account['funde'] = $row['funde']; //TODO: wird noch nicht richtig geparsed 
+
+        return $account;
+    }
+}
