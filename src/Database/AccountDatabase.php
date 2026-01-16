@@ -1,7 +1,7 @@
 <?php
 namespace Database;
 
-require __DIR__ . '/../../vendor/autoload.php'; //Muss das wirklich so darein?
+require __DIR__ . '/../../vendor/autoload.php'; //Muss das wirklich so überall rein?
 
 use Core\Database;
 use Models\Account;
@@ -49,7 +49,7 @@ class AccountDatabase{
         $account['plz'] = $row['plz'];
         $account['email'] = $row['email'];
         $account['telefonnummer'] = $row['telefonnummer'];
-        $account['funde'] = $row['funde']; //TODO: wird noch nicht richtig geparsed 
+        $account['funde'] = json_decode($row['funde']);  //TODO: wird vllt. noch nicht richtig geparsed 
 
         return $account;
     }
