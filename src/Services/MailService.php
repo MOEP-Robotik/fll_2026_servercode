@@ -3,8 +3,7 @@ namespace Services;
 
 use Dotenv\Dotenv;
 
-class MailService
-{
+class MailService {
     private \Resend\Client $resend;
 
     public function __construct()

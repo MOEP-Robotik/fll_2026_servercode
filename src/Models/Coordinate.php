@@ -6,7 +6,7 @@ Coordinate:
     longitude (lon)
     latitude(lat)
 */
-class Coordinate{
+class Coordinate {
     public float $lon;
     public float $lat;
 }

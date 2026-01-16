@@ -10,8 +10,8 @@ class AuthController{
     public function login_request(string $email, string $password): string | false { #returnt entweder false oder den jwt_token
         $accountdb = new AccountDatabase();
         $account = $accountdb->getByEmail($email);
-        $passfromDB = $account['passhash']; #von Datenbank nehmen
-        $user_id = $account['id']; #von Datenbank nehmen
+        $passfromDB = $account['passhash'];
+        $user_id = $account['id'];
         if (password_verify($password, $passfromDB)){
             $auth = new Auth();
             $jwt_token = $auth->generate_jwt($user_id);

@@ -12,7 +12,7 @@ Account (DB):
     telefonnummer: text
     funde: array<submission_id> (-> array<id>)
 */
-class Account{
+class Account {
     public int | null $id;
     public string $vorname;
     public string $nachname;
