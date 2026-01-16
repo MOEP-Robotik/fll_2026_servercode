@@ -5,9 +5,32 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Auth;
 use Database\AccountDatabase;
+use Core\Request;
+use Core\Response;
 
 class AuthController{
-    public function login_request(string $email, string $password): string | false { #returnt entweder false oder den jwt_token
+    public function authenticate(Request $request): void{
+        if ($request->post()){
+            switch ($request->path()){
+                case "/api/auth/login":
+                    $data = $request->json();
+                    $this->login_request($data['email'], $data['password']);
+                    return;
+                case "/api/auth/validate":
+                    $data = $request->json();
+                    $this->validate_token($data['jwt_token']);
+                    return;
+                default:
+                    Response::json(['message' => "Ressource not found"], 404);
+                    return;
+            }
+        } else {
+            Response::json(['message' => 'Wrong Method (Try POST)'], 405);
+            return;
+        }
+    }
+
+    public function login_request(string $email, string $password): void {
         $accountdb = new AccountDatabase();
         $account = $accountdb->getByEmail($email);
         $passfromDB = $account['passhash'];
@@ -15,13 +38,18 @@ class AuthController{
         if (password_verify($password, $passfromDB)){
             $auth = new Auth();
             $jwt_token = $auth->generate_jwt($user_id);
-            return $jwt_token;
+            Response::json(['jwt_token' => $jwt_token], 200);
+            return;
         } else {
-            return false;
+            Response::json(['jwt_token' => null], 401);
+            return;
         }
     }
-    public function validate_login(string $jwt_token): bool {
+
+    public function validate_token(string $jwt_token): void {
         $auth = new Auth();
-        return $auth->validate_JWT($jwt_token);
+        $valid = $auth->validate_JWT($jwt_token);
+        Response::json(['valid' => $valid]);
+        return;
     }
 }

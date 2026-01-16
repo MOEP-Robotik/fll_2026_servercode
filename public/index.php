@@ -21,9 +21,10 @@ switch ($request->path()) {
             $controller = new SubmissionController();
             $controller->submit($request);
             break;
-        } elseif (str_starts_with($request->path(), "/api/login")) {
+        } elseif (str_starts_with($request->path(), "/api/auth")) {
             $controller = new AuthController();
-            //$controller->login_request(parameter, die gesendet werden)
+            $controller->authenticate($request);
+            break;
         }
         Response::json(['error' => 'Not found'], 404);
 }
