@@ -104,13 +104,14 @@ class AuthController {
         $user = $accountdb->getById($user_id);
 
         $userinfo = new UserInfo();
-        $userinfo->vorname = $user['vorname'];
-        $userinfo->nachname = $user['nachname'];
-        $userinfo->plz = $user['plz'];
-        $userinfo->email = $user['email'];
-        $userinfo->telefonnummer = $user['telefonnummer'];
-        $userinfo->funde = $user['funde'];
+        $userinfo->vorname = $user->vorname;
+        $userinfo->nachname = $user->nachname;
+        $userinfo->plz = $user->plz;
+        $userinfo->email = $user->email;
+        $userinfo->telefonnummer = $user->telefonnummer;
+        $userinfo->funde = $user->funde;
 
+        Response::json($userinfo);
         return $userinfo;
     }
 }

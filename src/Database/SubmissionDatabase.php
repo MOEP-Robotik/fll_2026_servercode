@@ -27,9 +27,6 @@ class SubmissionDatabase {
             ':t' => $data->title,
             ':d' => $data->description ?? '',
             ':l' => $location,
-            ':e' => $data->email,
-            ':p' => $data->telephone,
-            ':a' => $data->address,
             ':z' => $data->date
         ]);
 

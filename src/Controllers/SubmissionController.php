@@ -1,8 +1,10 @@
 <?php
 namespace Controllers;
 
+use Core\Auth;
 use Core\Request;
 use Core\Response;
+use Database\AccountDatabase;
 use Models\Submission;
 use Models\Coordinate;
 use Database\SubmissionDatabase;
@@ -19,6 +21,17 @@ class SubmissionController {
 
     private function new(Request $request): void {
         $data = $request->json();
+
+        $auth = new Auth();
+        $user_id = $auth->getUserIdFromJWT($data["jwt_token"]);
+        if (!$user_id) {
+            Response::json(["message" => "Authorization required"], 401);
+            return;
+        }
+
+        $accountdb = new AccountDatabase();
+        $user = $accountdb->getById($user_id);
+
         if (empty($data['title'])) {
             Response::json(['message' => 'Title missing'], 400);
             return;
@@ -38,16 +51,13 @@ class SubmissionController {
         $submiss->title = $data['title'];
         $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
-        $submiss->email = $data['email'];
-        $submiss->address = $data['address'];
-        $submiss->telephone = $data['telephone'];
         $submiss->date = $data['date'];
         $submiss->files = $data['files'] ?? null;
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
 
-        (new MailService())->sendConfirmation($data['email'], $data['title']);
+        new MailService()->sendConfirmation($submiss, $user);
 
         Response::json(['id' => $id]);
     }

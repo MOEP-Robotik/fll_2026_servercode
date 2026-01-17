@@ -16,10 +16,10 @@ class MailService {
     }
 
     public function getEmailContent(string $vorname, string $nachname, string $title, string $description, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {
-        $base = `
+        $base = <<<'HTML'
             <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff">
                 <tr>
-                    <td style="padding:20px; color:#000000; font-size:14px; line-height:1.5;">
+                    <td style="color:#000000; font-size:14px; line-height:1.5;">
                         <p>Sehr geehrte/r {{vorname}} {{nachname}},</p>
                 
                         <p>
@@ -85,7 +85,7 @@ class MailService {
                     </td>
                 </tr>
             </table>
-        `;
+        HTML;
         $base = str_replace('{{vorname}}', htmlspecialchars($vorname ?? ''), $base);
         $base = str_replace('{{nachname}}', htmlspecialchars($nachname ?? ''), $base);
         $base = str_replace('{{title}}', htmlspecialchars($title ?? ''), $base);
@@ -114,7 +114,7 @@ class MailService {
                 $account->email,
                 $account->telefonnummer,
                 $account->plz,
-                $submission->timestamp
+                date("F j, Y, g:i a")
             ),
         ]);
     }
