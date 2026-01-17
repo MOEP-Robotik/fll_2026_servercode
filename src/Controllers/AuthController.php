@@ -8,6 +8,7 @@ use Database\AccountDatabase;
 use Core\Request;
 use Core\Response;
 use Models\Account;
+use Models\UserInfo;
 
 class AuthController {
     public function authenticate(Request $request): void {
@@ -26,6 +27,8 @@ class AuthController {
             case "/api/auth/register":
                 $this->registerRequest($data['email'], $data['password'], $data['vorname'], $data['nachname'], $data['plz'], $data['telefonnummer']);
                 return;
+            case "/api/auth/userinfo":
+                $this->getUserInfo($data['jwt_token']);
             default:
                 Response::json(['message' => "Resource not found"], 404);
                 return;
@@ -90,5 +93,23 @@ class AuthController {
         $jwt_token = $auth->generate_jwt($newId);
 
         Response::json(['jwt_token' => $jwt_token]);
+    }
+
+    public function getUserInfo(string $token): UserInfo {
+        $auth = new Auth();
+        $user_id = $auth->getUserIdFromJWT($token);
+
+        $accountdb = new AccountDatabase();
+        $user = $accountdb->getById($user_id);
+
+        $userinfo = new UserInfo();
+        $userinfo->vorname = $user['vorname'];
+        $userinfo->nachname = $user['nachname'];
+        $userinfo->plz = $user['plz'];
+        $userinfo->email = $user['email'];
+        $userinfo->telefonnummer = $user['telefonnummer'];
+        $userinfo->funde = $user['funde'];
+
+        return $userinfo;
     }
 }

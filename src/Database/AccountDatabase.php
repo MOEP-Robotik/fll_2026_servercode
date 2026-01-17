@@ -30,8 +30,7 @@ class AccountDatabase{
         return $account;
     }
 
-    public function getById(int $id): Account | false
-    {
+    public function getById(int $id): Account | false {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1;");
         $stmt->execute([
             ':id' => $id
