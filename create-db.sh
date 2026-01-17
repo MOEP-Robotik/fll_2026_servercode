@@ -38,10 +38,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     title TEXT NOT NULL,
     description TEXT,
     location TEXT,
-    email TEXT,
-    telephone TEXT,
-    address TEXT,
-    date TEXT,
+    files TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
