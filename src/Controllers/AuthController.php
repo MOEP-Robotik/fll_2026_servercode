@@ -86,6 +86,9 @@ class AuthController {
             return;
         }
 
-        Response::json(['id' => $newId]);
+        $auth = new Auth();
+        $jwt_token = $auth->generate_jwt($newId);
+
+        Response::json(['jwt_token' => $jwt_token]);
     }
 }
