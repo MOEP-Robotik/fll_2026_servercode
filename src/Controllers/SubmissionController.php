@@ -7,6 +7,8 @@ use Models\Submission;
 use Models\Coordinate;
 use Database\SubmissionDatabase;
 use Services\MailService;
+use Core\CSV;
+use Models\CSVData;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -78,5 +80,28 @@ class SubmissionController {
             Response::json($submissions);
             return;
         }
+    }
+
+    public function exportCSV($submission_id): bool{ //gibt success zurück; könnte maybe den Dateipfad zurückgeben
+        $repo = new SubmissionDatabase();
+        $row = $repo->getById($submission_id);
+        if (!$row){
+            return false;
+        }
+        $coordinate = new Coordinate();
+        $coordinate->lon = (float)$row['coordinate']['lon'];
+        $coordinate->lat = (float)$row['coordinate']['lat'];
+
+        $data = new CSVData();
+        $data->title = $row['title'];
+        $data->description = $row['description'];
+        $data->coordinate = $coordinate;
+        $data->email = $row['email'];
+        $data->telephone = $row['telephone'];
+
+        $csv = new CSV();
+        $csv->open($submission_id); //TODO: filepath ausdenken
+        $csv->writeOne($data);
+        return true;
     }
 }
