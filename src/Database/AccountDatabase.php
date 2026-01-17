@@ -21,7 +21,6 @@ class AccountDatabase{
         ]);
         $row = $stmt->fetch();
         if (!$row) {
-            error_log("Unable to find account for email " . $email);
             return false;
         }
         $account = new PartialAccount();
@@ -53,5 +52,23 @@ class AccountDatabase{
         $account->funde = json_decode($row['funde']);  //TODO: wird vllt. noch nicht richtig geparsed 
 
         return $account;
+    }
+
+    public function create(Account $account): int {
+        $stmt = $this->db->prepare("INSERT INTO users (vorname, nachname, passhash, plz, email, telefonnummer, funde) VALUES (:vorname, :nachname, :passhash, :plz, :email, :telefonnummer, :funde)");
+        $result = $stmt->execute([
+            ':vorname' => $account->vorname,
+            ':nachname' => $account->nachname,
+            ':passhash' => $account->passhash,
+            ':plz' => $account->plz,
+            ':email' => $account->email,
+            ':telefonnummer' => $account->telefonnummer,
+            ':funde' => json_encode($account->funde)
+        ]);
+        if (!$result) {
+            error_log("Failed to create account for " . $account->email);
+            return false;
+        }
+        return $this->db->lastInsertId();
     }
 }

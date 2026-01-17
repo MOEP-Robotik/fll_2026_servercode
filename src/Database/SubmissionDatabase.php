@@ -33,7 +33,7 @@ class SubmissionDatabase {
             ':z' => $data->date
         ]);
 
-        return (int)$this->db->lastInsertId();
+        return $this->db->lastInsertId();
     }
 
     //returns Array with Submissions

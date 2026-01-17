@@ -7,25 +7,28 @@ use Core\Auth;
 use Database\AccountDatabase;
 use Core\Request;
 use Core\Response;
+use Models\Account;
 
 class AuthController {
     public function authenticate(Request $request): void {
-        if ($request->post()){
-            switch ($request->path()){
-                case "/api/auth/login":
-                    $data = $request->json();
-                    $this->loginRequest($data['email'], $data['password']);
-                    return;
-                case "/api/auth/validate":
-                    $data = $request->json();
-                    $this->validateToken($data['jwt_token']);
-                    return;
-                default:
-                    Response::json(['message' => "Ressource not found"], 404);
-                    return;
-            }
-        } else {
+        if (!$request->post()){
             Response::json(['message' => 'Wrong Method (Try POST)'], 405);
+            return;
+        }
+        $data = $request->json();
+        switch ($request->path()){
+            case "/api/auth/login":
+                $this->loginRequest($data['email'], $data['password']);
+                return;
+            case "/api/auth/validate":
+                $this->validateToken($data['jwt_token']);
+                return;
+            case "/api/auth/register":
+                $this->registerRequest($data['email'], $data['password'], $data['vorname'], $data['nachname'], $data['plz'], $data['telefonnummer']);
+                return;
+            default:
+                Response::json(['message' => "Resource not found"], 404);
+                return;
         }
     }
 
@@ -51,5 +54,38 @@ class AuthController {
         $auth = new Auth();
         $valid = $auth->validate_JWT($jwt_token);
         Response::json(['valid' => $valid]);
+    }
+
+    public function registerRequest(string $email, string $password, string $vorname, string $nachname, int $plz, string $telefonnummer) {
+        if (empty($email) || empty($password) || empty($vorname) || empty($nachname) || empty($telefonnummer)) {
+            Response::json(['message' => 'Required fields are empty'], 400);
+            return;
+        }
+
+        $accountdb = new AccountDatabase();
+        $account = $accountdb->getByEmail($email);
+        if ($account) {
+            Response::json(['message' => 'User already exists'], 409);
+            return;
+        }
+
+        $passhash = password_hash($password, PASSWORD_DEFAULT);
+
+        $account = new Account();
+        $account->email = $email;
+        $account->passhash = $passhash;
+        $account->vorname = $vorname;
+        $account->nachname = $nachname;
+        $account->plz = $plz;
+        $account->telefonnummer = $telefonnummer;
+        $account->funde = [];
+
+        $newId = $accountdb->create($account);
+        if (!$newId) {
+            Response::json(['message' => 'Registration failed while saving user'], 500);
+            return;
+        }
+
+        Response::json(['id' => $newId]);
     }
 }
