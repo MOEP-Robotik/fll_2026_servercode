@@ -21,10 +21,12 @@ class SubmissionController {
         $data = $request->json();
         if (empty($data['title'])) {
             Response::json(['message' => 'Title missing'], 400);
+            return;
         }
 
         if (empty($data['coordinate']) || empty($data['coordinate']['lon']) || empty($data['coordinate']['lat'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
+            return;
         }
 
         $coordinate = new Coordinate();

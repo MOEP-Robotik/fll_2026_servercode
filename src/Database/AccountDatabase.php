@@ -14,18 +14,19 @@ class AccountDatabase{
     {
         $this->db = Database::get();
     }
-    public function getByemail(string $email): PartialAccount | false{
+    public function getByEmail(string $email): PartialAccount | false {
         $stmt = $this->db->prepare("SELECT id, passhash FROM users WHERE email = :email LIMIT 1;");
         $stmt->execute([
             ":email" => $email
         ]);
         $row = $stmt->fetch();
         if (!$row) {
+            error_log("Unable to find account for email " . $email);
             return false;
         }
         $account = new PartialAccount();
-        $account['id'] = $row['id'];
-        $account['passhash'] = $row['passhash'];
+        $account->id = $row['id'];
+        $account->passhash = $row['passhash'];
 
         return $account;
     }
@@ -42,14 +43,14 @@ class AccountDatabase{
         }
 
         $account = new Account();
-        $account['id'] = $row['id'];
-        $account['vorname'] = $row['vorname'];
-        $account['nachname'] = $row['nachname'];
-        $account['passhash'] = $row['passhash'];
-        $account['plz'] = $row['plz'];
-        $account['email'] = $row['email'];
-        $account['telefonnummer'] = $row['telefonnummer'];
-        $account['funde'] = json_decode($row['funde']);  //TODO: wird vllt. noch nicht richtig geparsed 
+        $account->id = $row['id'];
+        $account->vorname = $row['vorname'];
+        $account->nachname = $row['nachname'];
+        $account->passhash = $row['passhash'];
+        $account->plz = $row['plz'];
+        $account->email = $row['email'];
+        $account->telefonnummer = $row['telefonnummer'];
+        $account->funde = json_decode($row['funde']);  //TODO: wird vllt. noch nicht richtig geparsed 
 
         return $account;
     }

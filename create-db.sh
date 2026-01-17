@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS analysis (
     notes TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (submission_id) REFERENCES submissions(id)
+); 
+
+CREATE TABLE IF NOT EXISTS user (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vorname text NOT NULL,
+  nachname text NOT NULL,
+  passhash text NOT NULL,
+  email text NOT NULL,
+  plz text NOT NULL,
+  telefonnummer text NOT NULL,
+  funde longtext NOT NULL
 );
 SQL
 
