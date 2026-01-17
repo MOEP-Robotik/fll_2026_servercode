@@ -29,6 +29,7 @@ class AuthController {
                 return;
             case "/api/auth/userinfo":
                 $this->getUserInfo($data['jwt_token']);
+                return;
             default:
                 Response::json(['message' => "Resource not found"], 404);
                 return;
