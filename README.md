@@ -1,4 +1,8 @@
 # FLL 2026 Backend
+## Requirements
+- `intl` Plugin (php.ini)
+- `pdo_sqlite` Plugin (php.ini)
+
 ## Deployment
 > [!IMPORTANT]
 > Dies muss nur einmal ausgeführt werden!

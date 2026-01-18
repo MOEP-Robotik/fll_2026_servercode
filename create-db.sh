@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     description TEXT,
     location TEXT,
     files TEXT,
+    date TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
