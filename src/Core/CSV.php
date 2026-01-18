@@ -7,7 +7,7 @@ class CSV {
     private $stream = null;
     public ?string $filename = null;
 
-    private array $head = ["title", "description", "coordinate", "email", "telephone"];
+    private array $head = ["title", "description", "longitude", "latitude", "email", "telephone"];
 
     public function open(bool $clearFile = false): void {
         if ($this->filename === null) {
@@ -17,6 +17,10 @@ class CSV {
         try {
             if ($clearFile) {
                 $this->stream = fopen($this->filename, "w");
+                if ($this->stream === false){
+                    throw new \Exception("Problem beim Öffnen der Datei");
+                }
+                
                 fputcsv($this->stream, $this->head);
                 return;
             }
@@ -31,8 +35,18 @@ class CSV {
                 }
 
                 $this->stream = fopen($this->filename, "a");
+
+                if ($this->stream === false) {
+                    throw new \Exception("Problem beim Öffnen der Datei");
+                }
+
             } else {
                 $this->stream = fopen($this->filename, "w");
+
+                if ($this->stream === false) {
+                    throw new \Exception("Problem beim Öffnen der Datei");
+                }
+
                 fputcsv($this->stream, $this->head);
             }
         } catch (\Throwable $e) {
