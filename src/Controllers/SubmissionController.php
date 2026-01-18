@@ -23,9 +23,15 @@ class SubmissionController {
         $data = $request->json();
 
         $auth = new Auth();
+        $valid = $auth->validate_JWT($data["jwt_token"]);
+        if (!$valid) {
+            Response::json(["message" => "Authorization required: Invalid JWT"], 401);
+            return;
+        }
+
         $user_id = $auth->getUserIdFromJWT($data["jwt_token"]);
         if (!$user_id) {
-            Response::json(["message" => "Authorization required"], 401);
+            Response::json(["message" => "Invalid user id"], 400);
             return;
         }
 

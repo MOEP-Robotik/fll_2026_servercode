@@ -98,6 +98,12 @@ class AuthController {
 
     public function getUserInfo(string $token): UserInfo {
         $auth = new Auth();
+        $valid = $auth->validate_JWT($token);
+        if (!$valid) {
+            Response::json(['message'=> 'JWT Token invalid'], 401);
+            return new UserInfo();
+        }
+
         $user_id = $auth->getUserIdFromJWT($token);
 
         $accountdb = new AccountDatabase();
