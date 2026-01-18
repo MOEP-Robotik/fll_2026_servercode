@@ -7,7 +7,7 @@ class CSV {
     private $stream = null;
     public ?string $filename = null;
 
-    private array $head = ["name", "ort"]; //TODO: Herausfinden, wie die Datei aufgebaut sein soll
+    private array $head = ["title", "description", "coordinate", "email", "telephone"];
 
     public function open(bool $clearFile = false): void {
         if ($this->filename === null) {
