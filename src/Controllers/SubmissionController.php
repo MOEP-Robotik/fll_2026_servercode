@@ -100,7 +100,8 @@ class SubmissionController {
         $data->telephone = $row['telephone'];
 
         $csv = new CSV();
-        $csv->open($submission_id); //TODO: filepath ausdenken
+        $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen
+        $csv->open($filename);
         $csv->writeOne($data);
         return true;
     }
