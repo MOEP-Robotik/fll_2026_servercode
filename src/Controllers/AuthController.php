@@ -98,19 +98,26 @@ class AuthController {
 
     public function getUserInfo(string $token): UserInfo {
         $auth = new Auth();
+        $valid = $auth->validate_JWT($token);
+        if (!$valid) {
+            Response::json(['message'=> 'JWT Token invalid'], 401);
+            return new UserInfo();
+        }
+
         $user_id = $auth->getUserIdFromJWT($token);
 
         $accountdb = new AccountDatabase();
         $user = $accountdb->getById($user_id);
 
         $userinfo = new UserInfo();
-        $userinfo->vorname = $user['vorname'];
-        $userinfo->nachname = $user['nachname'];
-        $userinfo->plz = $user['plz'];
-        $userinfo->email = $user['email'];
-        $userinfo->telefonnummer = $user['telefonnummer'];
-        $userinfo->funde = $user['funde'];
+        $userinfo->vorname = $user->vorname;
+        $userinfo->nachname = $user->nachname;
+        $userinfo->plz = $user->plz;
+        $userinfo->email = $user->email;
+        $userinfo->telefonnummer = $user->telefonnummer;
+        $userinfo->funde = $user->funde;
 
+        Response::json($userinfo);
         return $userinfo;
     }
 }

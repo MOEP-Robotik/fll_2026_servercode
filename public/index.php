@@ -6,6 +6,8 @@ use Core\Response;
 use Controllers\SubmissionController;
 use Controllers\AuthController;
 
+date_default_timezone_set("Europe/Berlin");
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     Response::handleOptionsRequest();
 }
