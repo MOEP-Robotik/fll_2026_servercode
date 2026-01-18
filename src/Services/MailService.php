@@ -114,7 +114,7 @@ class MailService {
                 $account->email,
                 $account->telefonnummer,
                 $account->plz,
-                date("F j, Y, g:i a")
+                \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE')
             ),
         ]);
     }
