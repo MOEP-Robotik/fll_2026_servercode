@@ -14,6 +14,6 @@ class CSVData {
     public string $date;
 
     public function toArray(): array {
-        return [$this->title, $this->description, $this->coordinate, $this->email, $this->telephone, $this->date];
+        return [$this->title, $this->description, $this->coordinate->lon, $this->coordinate->lat, $this->email, $this->telephone, $this->date];
     }
 }
