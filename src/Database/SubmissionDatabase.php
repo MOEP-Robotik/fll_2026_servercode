@@ -49,7 +49,6 @@ class SubmissionDatabase {
             $submission->title = (string)$row['title'];
             $submission->description = (string)$row['description'];
             $submission->coordinate = $location;
-            $submission->email = (string)$row['email'];
             $submission->files = $row['files'] ? (array)$row['files'] : null;
             $submission->timestamp = (string)$row['timestamp'];
 
@@ -77,7 +76,6 @@ class SubmissionDatabase {
         $submission->title = (string)$row['title'];
         $submission->description = (string)$row['description'];
         $submission->coordinate = $location;
-        $submission->email = (string)$row['email'];
         $submission->files = $row['filepath'] ? (array)$row['filepath'] : null;
         $submission->timestamp = (string)$row['timestamp'];
 
