@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS analysis (
     FOREIGN KEY (submission_id) REFERENCES submissions(id)
 ); 
 
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   vorname text NOT NULL,
   nachname text NOT NULL,
