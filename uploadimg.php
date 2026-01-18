@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-// DB-Verbindung
+// DB-Verbindung (für mysql/mariaDB) sqlite ist in der Datenbank file
 $host = $_ENV['dbhost'];
 $dbname = $_ENV['dbname'];
 $dbuser = $_ENV['dbuser'];

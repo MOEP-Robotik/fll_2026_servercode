@@ -58,7 +58,7 @@ class SubmissionDatabase {
     }
 
     public function getById(int $id): Submission | false {
-        $stmt = $this->db->prepare("SELECT * FROM submissions WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT * FROM submissions WHERE id = :id LIMIT 1");
         $stmt->execute([
             ':id' => $id
         ]);
