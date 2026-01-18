@@ -3,58 +3,69 @@ namespace Core;
 
 use Models\CSVData;
 
-//Kann nur zum Schreiben verwendet werden; auch nur für diesen Anwendungsweck, der geplant ist
 class CSV {
-    private $stream;
-    private $head = ["name", "ort"]; //TODO: entscheiden, was da rein muss
+    private $stream = null;
+    public ?string $filename = null;
 
-    public function open(string $filename, bool $clearFile = false): void {
-        try{
-            if ($clearFile){
-                $this->stream = fopen($filename, "w");
-                fputcsv($this->stream, $this->head);
-            } else{
-                if (file_exists($filename)){
-                    $this->stream = fopen($filename, "r");
-                    $headFromFile = fgets($this->stream);
-                    fclose($this->stream);
-                    if ($headFromFile == $this->head) {
-                        $this->stream = fopen($filename, "a");
-                    } else {
-                        throw new \Exception("Datei mit falschem head gewählt");
-                    }
-                } else {
-                    fopen($filename,"w");
-                }
-            }
-        } catch (\Throwable $e){
-            error_log($e);
+    private array $head = ["name", "ort"];
+
+    public function open(bool $clearFile = false): void {
+        if ($this->filename === null) {
+            throw new \Exception("Filename muss gesetzt werden");
         }
-    }
 
-    public function writeArr(array $data): bool { //gibt "success" zurück
-        try{
-            if ($data && is_array($data)){
-                foreach($data as $row){
-                    fputcsv($this->stream, $row);
-                }
-            }
-            return true;
-        } catch (\Throwable $e){
-            error_log($e);
-            return false;
-        }
-    }
-
-    public function writeOne(CSVData $data): bool { //gibt "success" zurück; Kein Plan ob das funktioniert
         try {
-            if ($data) {
-                fputcsv($this->stream, (array)$data);
+            if ($clearFile) {
+                $this->stream = fopen($this->filename, "w");
+                fputcsv($this->stream, $this->head);
+                return;
             }
-            return true;
+
+            if (file_exists($this->filename)) {
+                $check = fopen($this->filename, "r");
+                $headFromFile = fgetcsv($check);
+                fclose($check);
+
+                if ($headFromFile !== $this->head) {
+                    throw new \Exception("Datei mit falschem Header gewählt");
+                }
+
+                $this->stream = fopen($this->filename, "a");
+            } else {
+                $this->stream = fopen($this->filename, "w");
+                fputcsv($this->stream, $this->head);
+            }
         } catch (\Throwable $e) {
-            error_log($e);
-            return false;
+            error_log($e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function writeArr(array $data): bool {
+        if ($this->stream === null) {
+            throw new \Exception("File muss vorher geöffnet werden");
+        }
+
+        foreach ($data as $row) {
+            fputcsv($this->stream, $row);
+        }
+
+        return true;
+    }
+
+    public function writeOne(CSVData $data): bool {
+        if ($this->stream === null) {
+            throw new \Exception("File muss vorher geöffnet werden");
+        }
+
+        fputcsv($this->stream, $data->toArray());
+        return true;
+    }
+
+    public function close(): void {
+        if ($this->stream !== null) {
+            fclose($this->stream);
+            $this->stream = null;
         }
     }
 }
