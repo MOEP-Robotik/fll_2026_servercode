@@ -109,7 +109,7 @@ class MailService {
                 $account->nachname,
                 $submission->title,
                 $submission->description,
-                "Längengrad: " . $submission->coordinate->lat . " Breitengrad: " . $submission->coordinate->lon,
+                "Längengrad: " . $submission->coordinate->lon . " Breitengrad: " . $submission->coordinate->lat,
                 $submission->date,
                 $account->email,
                 $account->telefonnummer,
