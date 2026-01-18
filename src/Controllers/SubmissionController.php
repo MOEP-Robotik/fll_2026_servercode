@@ -89,15 +89,15 @@ class SubmissionController {
             return false;
         }
         $coordinate = new Coordinate();
-        $coordinate->lon = (float)$row['coordinate']['lon'];
-        $coordinate->lat = (float)$row['coordinate']['lat'];
+        $coordinate->lon = (float)$row->coordinate->lon;
+        $coordinate->lat = (float)$row->coordinate->lat;
 
         $data = new CSVData();
-        $data->title = $row['title'];
-        $data->description = $row['description'];
+        $data->title = $row->title;
+        $data->description = $row->description;
         $data->coordinate = $coordinate;
-        $data->email = $row['email'];
-        $data->telephone = $row['telephone'];
+        $data->email = $row->email;
+        $data->telephone = $row->telephone;
 
         $csv = new CSV();
         $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen
