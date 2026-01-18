@@ -82,10 +82,10 @@ class SubmissionController {
         }
     }
 
-    public function exportCSV($submission_id): bool{ //gibt success zurück; könnte maybe den Dateipfad zurückgeben
+    public function exportCSV(int $submission_id): bool { //gibt success zurück; könnte maybe den Dateipfad zurückgeben
         $repo = new SubmissionDatabase();
         $row = $repo->getById($submission_id);
-        if (!$row){
+        if (!$row) {
             return false;
         }
         $coordinate = new Coordinate();
@@ -101,8 +101,15 @@ class SubmissionController {
 
         $csv = new CSV();
         $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen
-        $csv->open($filename);
-        $csv->writeOne($data);
+
+        try {
+            $csv->open($filename);
+            $csv->writeOne($data);
+            $csv->close();
+        } catch (\Throwable $e) {
+            return false;
+        }
+
         return true;
     }
 }

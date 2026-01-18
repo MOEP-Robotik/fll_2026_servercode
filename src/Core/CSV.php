@@ -7,7 +7,7 @@ class CSV {
     private $stream = null;
     public ?string $filename = null;
 
-    private array $head = ["title", "description", "longitude", "latitude", "email", "telephone"];
+    private array $head = ["title", "description", "longitude", "latitude", "email", "telephone", "date"];
 
     public function open(bool $clearFile = false): void {
         if ($this->filename === null) {
@@ -20,7 +20,7 @@ class CSV {
                 if ($this->stream === false){
                     throw new \Exception("Problem beim Öffnen der Datei");
                 }
-                
+
                 fputcsv($this->stream, $this->head);
                 return;
             }
