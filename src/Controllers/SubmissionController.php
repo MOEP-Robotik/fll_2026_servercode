@@ -37,6 +37,10 @@ class SubmissionController {
 
         $accountdb = new AccountDatabase();
         $user = $accountdb->getById($user_id);
+        if (!$user) {
+            Response::json(['message' => 'User not found'], 404);
+            return;
+        }
 
         if (empty($data['title'])) {
             Response::json(['message' => 'Title missing'], 400);
