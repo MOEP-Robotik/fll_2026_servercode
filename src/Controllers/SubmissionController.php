@@ -116,8 +116,8 @@ class SubmissionController {
         $data->title = $row->title;
         $data->description = $row->description;
         $data->coordinate = $coordinate;
-        $data->email = $row->email;
-        $data->telephone = $row->telephone;
+        /*$data->email = $row->email;
+        $data->telephone = $row->telephone;*/
 
         $csv = new CSV();
         $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen
