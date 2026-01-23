@@ -9,7 +9,7 @@ use Core\Request;
 use Core\Response;
 
 class ImageController {
-    private array $images;
+    public array $images;
     private array $conf;
 
     public function __construct() {

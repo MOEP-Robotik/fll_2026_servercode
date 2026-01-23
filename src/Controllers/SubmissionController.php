@@ -11,6 +11,7 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Core\CSV;
 use Models\CSVData;
+use Controlllers\ImageController;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -64,7 +65,12 @@ class SubmissionController {
         $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
-        $submiss->files = $data['files'] ?? null;
+
+        $user_id = $auth->getUserIdFromJWT($data["jwt_token"]);
+        $imgs = new ImageController();
+        $imgs->uploadImgs($request->files(), $user_id);
+
+        $submiss->files = $imgs->images ?? null;
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
