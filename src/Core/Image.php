@@ -17,7 +17,7 @@ class Image {
     ) {
         // Dateiendung basierend auf MIME-Type hinzufügen
         $extension = $this->getExtensionFromMimeType($mimetype);
-        $this->filename = \Core\guidv4() . $extension;
+        $this->filename = UUID::guidv4() . $extension;
         $this->filepath = $folderpath . $this->filename;
         $this->mimetype = $mimetype;
         $this->filesize = $filesize;
