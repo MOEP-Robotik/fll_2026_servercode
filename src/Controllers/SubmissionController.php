@@ -30,16 +30,41 @@ class SubmissionController {
         } else {
             // FormData verarbeiten
             $postData = $request->postData();
+            
+            // Koordinaten aus verschiedenen Formaten extrahieren
+            $lon = null;
+            $lat = null;
+            
+            // Versuche verschachteltes Array (wenn PHP es automatisch geparst hat)
+            if (isset($postData['coordinate']) && is_array($postData['coordinate'])) {
+                $lon = $postData['coordinate']['lon'] ?? null;
+                $lat = $postData['coordinate']['lat'] ?? null;
+            }
+            
+            // Falls nicht, versuche bracket-Notation (coordinate[lon])
+            if ($lon === null && isset($postData['coordinate[lon]'])) {
+                $lon = $postData['coordinate[lon]'];
+            }
+            if ($lat === null && isset($postData['coordinate[lat]'])) {
+                $lat = $postData['coordinate[lat]'];
+            }
+            
             $data = [
                 'title' => $postData['title'] ?? '',
                 'description' => $postData['description'] ?? '',
                 'coordinate' => [
-                    'lon' => $postData['coordinate']['lon'] ?? $postData['coordinate[lon]'] ?? null,
-                    'lat' => $postData['coordinate']['lat'] ?? $postData['coordinate[lat]'] ?? null,
+                    'lon' => $lon,
+                    'lat' => $lat,
                 ],
                 'date' => $postData['date'] ?? null,
                 'jwt_token' => $postData['jwt_token'] ?? '',
             ];
+        }
+
+        // Prüfe, ob jwt_token vorhanden ist
+        if (empty($data['jwt_token'])) {
+            Response::json(["message" => "Authorization required: JWT token missing"], 401);
+            return;
         }
 
         $auth = new Auth();
@@ -67,7 +92,19 @@ class SubmissionController {
             return;
         }
 
-        if (empty($data['coordinate']) || empty($data['coordinate']['lon']) || empty($data['coordinate']['lat'])) {
+        // Prüfe Koordinaten: empty(0) würde true zurückgeben, daher explizit auf null prüfen
+        if (!isset($data['coordinate']) || !is_array($data['coordinate'])) {
+            Response::json(['message' => 'Coordinate missing or invalid'], 400);
+            return;
+        }
+
+        if (!isset($data['coordinate']['lon']) || !isset($data['coordinate']['lat'])) {
+            Response::json(['message' => 'Coordinate missing or invalid'], 400);
+            return;
+        }
+
+        // Prüfe, ob Koordinaten numerisch sind (0 ist ein gültiger Wert)
+        if (!is_numeric($data['coordinate']['lon']) || !is_numeric($data['coordinate']['lat'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
             return;
         }
