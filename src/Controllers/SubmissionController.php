@@ -23,7 +23,24 @@ class SubmissionController {
     }
 
     private function new(Request $request): void {
-        $data = $request->json();
+        // Unterstütze sowohl JSON als auch FormData
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($contentType, 'application/json') !== false) {
+            $data = $request->json();
+        } else {
+            // FormData verarbeiten
+            $postData = $request->postData();
+            $data = [
+                'title' => $postData['title'] ?? '',
+                'description' => $postData['description'] ?? '',
+                'coordinate' => [
+                    'lon' => $postData['coordinate']['lon'] ?? $postData['coordinate[lon]'] ?? null,
+                    'lat' => $postData['coordinate']['lat'] ?? $postData['coordinate[lat]'] ?? null,
+                ],
+                'date' => $postData['date'] ?? null,
+                'jwt_token' => $postData['jwt_token'] ?? '',
+            ];
+        }
 
         $auth = new Auth();
         $valid = $auth->validate_JWT($data["jwt_token"]);
@@ -66,11 +83,18 @@ class SubmissionController {
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
 
-        $user_id = $auth->getUserIdFromJWT($data["jwt_token"]);
-        $imgs = new ImageController($user_id);
-        $imgs->uploadImgs($request->files(), $user_id);
-
-        $submiss->files = $imgs->images ?? null;
+        // Bilder verarbeiten, falls vorhanden
+        $files = $request->files();
+        if (!empty($files)) {
+            try {
+                $imgs = new ImageController($user_id);
+                $imgs->uploadImgs($files, $user_id);
+                $submiss->files = $imgs->images ?? null;
+            } catch (\Exception $e) {
+                Response::json(['message' => 'Error uploading images: ' . $e->getMessage()], 400);
+                return;
+            }
+        }
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);

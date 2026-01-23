@@ -15,11 +15,26 @@ class Image {
         int $filesize,
         string $folderpath
     ) {
-        $this->filename = guidv4();
+        // Dateiendung basierend auf MIME-Type hinzufügen
+        $extension = $this->getExtensionFromMimeType($mimetype);
+        $this->filename = \Core\guidv4() . $extension;
         $this->filepath = $folderpath . $this->filename;
         $this->mimetype = $mimetype;
         $this->filesize = $filesize;
         $this->folderpath = $folderpath;
+    }
+
+    private function getExtensionFromMimeType(string $mimetype): string {
+        $mimeToExt = [
+            'image/jpeg' => '.jpg',
+            'image/jpg' => '.jpg',
+            'image/png' => '.png',
+            'image/gif' => '.gif',
+            'image/webp' => '.webp',
+            'image/tif' => '.tif',
+            'image/tiff' => '.tif',
+        ];
+        return $mimeToExt[$mimetype] ?? '';
     }
 
     public function isValidImg(): bool {
