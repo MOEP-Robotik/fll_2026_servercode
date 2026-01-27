@@ -1,0 +1,47 @@
+<?php
+namespace Core;
+
+/*
+Maybe sinnvoll --> sonst kann man nicht schon mit JSON arbeiten, finde ich
+*/
+
+class Imagelist {
+    private array $images = [];
+
+    public function append(Image $img) {
+        $this->images[] = $img;
+    }
+
+    /*
+     Konvertiert die Images zu einem JSON-Array-String
+     Jedes Image wird mit seinen Properties konvertiert:
+     - filename: Der Dateiname
+     - filepath: Der vollständige Pfad
+     - mimetype: Der MIME-Type
+     - filesize: Die Dateigröße
+     */
+    public function toJSON(): string {
+        $imagesData = [];
+        foreach ($this->images as $img) {
+            $imagesData[] = [
+                'filename' => $img->filename,
+                'filepath' => $img->filepath,
+                'mimetype' => $img->mimetype,
+                'filesize' => $img->filesize,
+            ];
+        }
+        return json_encode($imagesData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    public function createFromJSON(string $JSON): void {
+        $imagesData = json_decode($JSON, true);
+        if (!is_array($imagesData)) {
+            throw new \Exception('Ungültiges JSON-Format für Images');
+        }
+        
+        $this->images = [];
+        foreach ($imagesData as $data) {
+            $this->images[] = Image::fromJSON($data);
+        }
+    }
+}

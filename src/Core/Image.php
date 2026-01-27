@@ -42,6 +42,14 @@ class Image {
         return in_array($this->mimetype, $allowed_types);
     }
 
+    public static function fromJSON(array $data): Image {
+        // Erstelle ein Dummy-Image und überschreibe dann die Werte
+        $image = new self($data['mimetype'], $data['filesize'], dirname($data['filepath']) . '/');
+        $image->filename = $data['filename'];
+        $image->filepath = $data['filepath'];
+        return $image;
+    }
+
     public function saveImg(string $tempFilePath): bool {
         // Verzeichnis erstellen, falls nicht vorhanden
         if (!is_dir($this->folderpath)) {

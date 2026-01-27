@@ -126,9 +126,9 @@ class SubmissionController {
         $files = $request->files();
         if (!empty($files)) {
             try {
-                $imgs = new ImageController($user_id);
+                $imgs = new ImageController($user_id);# lieber mit der submission_id irgendwie machen
                 $imgs->uploadImgs($files, $user_id);
-                $submiss->files = $imgs->images ?? null;
+                $submiss->files = $imgs->images->toJSON();
             } catch (\Exception $e) {
                 Response::json(['message' => 'Error uploading images: ' . $e->getMessage()], 400);
                 return;
