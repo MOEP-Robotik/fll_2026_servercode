@@ -19,4 +19,12 @@ class Request {
     public function json(): array {
         return json_decode(file_get_contents('php://input'), true) ?? [];
     }
+
+    public function postData(): array {
+        return $_POST ?? [];
+    }
+
+    public function files(): array {
+        return $_FILES ?? [];
+    }
 }

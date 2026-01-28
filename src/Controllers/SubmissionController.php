@@ -1,6 +1,8 @@
 <?php
 namespace Controllers;
 
+require __DIR__ . '/../../vendor/autoload.php';
+
 use Core\Auth;
 use Core\Request;
 use Core\Response;
@@ -11,6 +13,7 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Core\CSV;
 use Models\CSVData;
+use Controllers\ImageController;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -22,7 +25,49 @@ class SubmissionController {
     }
 
     private function new(Request $request): void {
-        $data = $request->json();
+        // Unterstütze sowohl JSON als auch FormData
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($contentType, 'application/json') !== false) {
+            $data = $request->json();
+        } else {
+            // FormData verarbeiten
+            $postData = $request->postData();
+            
+            // Koordinaten aus verschiedenen Formaten extrahieren
+            $lon = null;
+            $lat = null;
+            
+            // Versuche verschachteltes Array (wenn PHP es automatisch geparst hat)
+            if (isset($postData['coordinate']) && is_array($postData['coordinate'])) {
+                $lon = $postData['coordinate']['lon'] ?? null;
+                $lat = $postData['coordinate']['lat'] ?? null;
+            }
+            
+            // Falls nicht, versuche bracket-Notation (coordinate[lon])
+            if ($lon === null && isset($postData['coordinate[lon]'])) {
+                $lon = $postData['coordinate[lon]'];
+            }
+            if ($lat === null && isset($postData['coordinate[lat]'])) {
+                $lat = $postData['coordinate[lat]'];
+            }
+            
+            $data = [
+                'title' => $postData['title'] ?? '',
+                'description' => $postData['description'] ?? '',
+                'coordinate' => [
+                    'lon' => $lon,
+                    'lat' => $lat,
+                ],
+                'date' => $postData['date'] ?? null,
+                'jwt_token' => $postData['jwt_token'] ?? '',
+            ];
+        }
+
+        // Prüfe, ob jwt_token vorhanden ist
+        if (empty($data['jwt_token'])) {
+            Response::json(["message" => "Authorization required: JWT token missing"], 401);
+            return;
+        }
 
         $auth = new Auth();
         $valid = $auth->validate_JWT($data["jwt_token"]);
@@ -49,7 +94,19 @@ class SubmissionController {
             return;
         }
 
-        if (empty($data['coordinate']) || empty($data['coordinate']['lon']) || empty($data['coordinate']['lat'])) {
+        // Prüfe Koordinaten: empty(0) würde true zurückgeben, daher explizit auf null prüfen
+        if (!isset($data['coordinate']) || !is_array($data['coordinate'])) {
+            Response::json(['message' => 'Coordinate missing or invalid'], 400);
+            return;
+        }
+
+        if (!isset($data['coordinate']['lon']) || !isset($data['coordinate']['lat'])) {
+            Response::json(['message' => 'Coordinate missing or invalid'], 400);
+            return;
+        }
+
+        // Prüfe, ob Koordinaten numerisch sind (0 ist ein gültiger Wert)
+        if (!is_numeric($data['coordinate']['lon']) || !is_numeric($data['coordinate']['lat'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
             return;
         }
@@ -64,7 +121,19 @@ class SubmissionController {
         $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
-        $submiss->files = $data['files'] ?? null;
+
+        // Bilder verarbeiten, falls vorhanden
+        $files = $request->files();
+        if (!empty($files)) {
+            try {
+                $imgs = new ImageController($user_id);# lieber mit der submission_id irgendwie machen
+                $imgs->uploadImgs($files, $user_id);
+                $submiss->files = $imgs->images->toJSON();
+            } catch (\Exception $e) {
+                Response::json(['message' => 'Error uploading images: ' . $e->getMessage()], 400);
+                return;
+            }
+        }
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
@@ -116,8 +185,8 @@ class SubmissionController {
         $data->title = $row->title;
         $data->description = $row->description;
         $data->coordinate = $coordinate;
-        $data->email = $row->email;
-        $data->telephone = $row->telephone;
+        /*$data->email = $row->email;
+        $data->telephone = $row->telephone;*/
 
         $csv = new CSV();
         $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen

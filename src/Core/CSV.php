@@ -1,6 +1,8 @@
 <?php
 namespace Core;
 
+require __DIR__ . '/../../vendor/autoload.php';
+
 use Models\CSVData;
 
 class CSV {

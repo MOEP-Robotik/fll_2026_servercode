@@ -1,6 +1,8 @@
 <?php
 namespace Models;
 
+use Core\Imagelist;
+
 /*
 Submissions (DB):
     id: int (von DB generiert)
@@ -8,7 +10,7 @@ Submissions (DB):
     description: text
     location: coordinate
     date: text
-    files: text
+    files: JSON-Objekt mit Array
     created_at: timestamp (von DB generiert)
 */
 class Submission {
@@ -17,6 +19,7 @@ class Submission {
     public string $description;
     public Coordinate $coordinate;
     public string $date;
-    public array | null $files;
+    public string | null  $files;
     public string | null $timestamp;
+
 }

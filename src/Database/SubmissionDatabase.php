@@ -1,6 +1,8 @@
 <?php
 namespace Database;
 
+require __DIR__ . '/../../vendor/autoload.php';
+
 use Core\Database;
 use Models\Coordinate;
 use Models\Submission;
@@ -16,18 +18,21 @@ class SubmissionDatabase {
     public function create(Submission $data): int
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (title, description, location, date) VALUES (:t, :d, :l, :z)"
+            "INSERT INTO submissions (title, description, location, date, files) VALUES (:t, :d, :l, :z, :f)"
         );
         $location = json_encode([
             'lon' => $data->coordinate->lon,
             'lat' => $data->coordinate->lat
         ]);
-        //TODO: irgendwo file-UUIDs generieren und in array speichern und dann einfügen
+        error_log(print_r($data->files, true));
+        $files = json_encode($data->files);
+        error_log(print_r($files, true));
         $stmt->execute([
             ':t' => $data->title,
             ':d' => $data->description ?? '',
             ':l' => $location,
-            ':z' => $data->date
+            ':z' => $data->date,
+            ':f' => $files
         ]);
 
         return $this->db->lastInsertId();
@@ -49,7 +54,7 @@ class SubmissionDatabase {
             $submission->title = (string)$row['title'];
             $submission->description = (string)$row['description'];
             $submission->coordinate = $location;
-            $submission->files = $row['files'] ? (array)$row['files'] : null;
+            $submission->files = $row['files'] ?? null;
             $submission->timestamp = (string)$row['timestamp'];
 
             $submissions[] = $submission;
