@@ -38,7 +38,7 @@ class Image {
     }
 
     public function isValidImg(): bool {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/tif'];
+        $allowed_types = ['image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/tif'];
         return in_array($this->mimetype, $allowed_types);
     }
 

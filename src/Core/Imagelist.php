@@ -8,8 +8,17 @@ Maybe sinnvoll --> sonst kann man nicht schon mit JSON arbeiten, finde ich
 class Imagelist {
     private array $images = [];
 
+    public function __construct(string | null $JSON = null) {
+        if (!is_null($JSON)) {
+            $this->createFromJSON($JSON);
+        }
+    }
+
     public function append(Image $img) {
         $this->images[] = $img;
+    }
+    public function get(): array {
+        return $this->images;
     }
 
     /*
@@ -33,7 +42,7 @@ class Imagelist {
         return json_encode($imagesData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function createFromJSON(string $JSON): void {
+    private function createFromJSON(string $JSON): void {
         $imagesData = json_decode($JSON, true);
         if (!is_array($imagesData)) {
             throw new \Exception('Ungültiges JSON-Format für Images');
@@ -43,5 +52,13 @@ class Imagelist {
         foreach ($imagesData as $data) {
             $this->images[] = Image::fromJSON($data);
         }
+    }
+
+    public function getPaths(): array {
+        $paths = [];
+        foreach($this->images as $img) {
+            $paths[] = $img->filepath;
+        }
+        return $paths;
     }
 }

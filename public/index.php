@@ -5,6 +5,7 @@ use Core\Request;
 use Core\Response;
 use Controllers\SubmissionController;
 use Controllers\AuthController;
+use Controllers\ImageController;
 
 date_default_timezone_set("Europe/Berlin");
 

@@ -24,9 +24,7 @@ class SubmissionDatabase {
             'lon' => $data->coordinate->lon,
             'lat' => $data->coordinate->lat
         ]);
-        error_log(print_r($data->files, true));
         $files = json_encode($data->files);
-        error_log(print_r($files, true));
         $stmt->execute([
             ':t' => $data->title,
             ':d' => $data->description ?? '',
@@ -81,8 +79,8 @@ class SubmissionDatabase {
         $submission->title = (string)$row['title'];
         $submission->description = (string)$row['description'];
         $submission->coordinate = $location;
-        $submission->files = $row['filepath'] ? (array)$row['filepath'] : null;
-        $submission->timestamp = (string)$row['timestamp'];
+        $submission->files = $row['files'] ?? null;
+        $submission->timestamp = (string)$row['created_at'];
 
         return $submission;
     }
