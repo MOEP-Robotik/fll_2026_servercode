@@ -37,9 +37,26 @@ class SubmissionDatabase {
     }
 
     //returns Array with Submissions
-    public function getAll(): array {
-        $stmt = $this->db->query("SELECT * FROM submissions");
-        $rows = $stmt->fetchAll();
+    public function getAll(int $userId): array {
+        $userquery = $this->db->query("SELECT funde FROM users WHERE id = :id LIMIT 1");
+        $userquery->execute([
+            ':id' => $userId
+        ]);
+        $row = $userquery->fetch();
+        if (!$row) {
+            error_log("WTF (siehe SubmissionController9");
+            return [];
+        }
+        $rows = [];
+        $funde = json_decode($row['funde'], true);
+        
+        $stmt = $this->db->query("SELECT * FROM submissions WHERE id = :id LIMIT 1");
+        foreach ($funde as $fund) {
+            $stmt->execute([
+                ":id" => $fund
+            ]);
+            $rows[] = $stmt->fetch();
+        }
         $submissions = [];
         foreach ($rows as $row) {
             $coordData = json_decode($row['location'], true);
@@ -53,7 +70,7 @@ class SubmissionDatabase {
             $submission->description = (string)$row['description'];
             $submission->coordinate = $location;
             $submission->files = $row['files'] ?? null;
-            $submission->timestamp = (string)$row['timestamp'];
+            $submission->timestamp = (string)$row['created_at'];
 
             $submissions[] = $submission;
         }

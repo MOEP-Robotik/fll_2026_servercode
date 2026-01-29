@@ -120,4 +120,15 @@ class AuthController {
         Response::json($userinfo);
         return $userinfo;
     }
+    public function getUserId(string $token): int {
+        $auth = new Auth();
+        $valid = $auth->validate_JWT($token);
+        if (!$valid) {
+            Response::json(['message' => 'JWT Token invalid'], 401);
+            return -1;
+        }
+
+        $userId = $auth->getUserIdFromJWT($token);
+        return $userId;
+    }
 }

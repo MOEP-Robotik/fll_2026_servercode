@@ -159,7 +159,10 @@ class SubmissionController {
             Response::json($submission);
             return;
         } else {
-            $submissions = $repo->getAll();
+            $data = $request->json();
+            $auth = new AuthController();
+            $userId = $auth->getUserId($data['jwt_token']);
+            $submissions = $repo->getAll($userId);
             if (!$submissions) {
                 Response::json([
                     'message' => 'No submissions found'
