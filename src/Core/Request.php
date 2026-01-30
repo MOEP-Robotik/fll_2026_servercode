@@ -27,4 +27,8 @@ class Request {
     public function files(): array {
         return $_FILES ?? [];
     }
+
+    public function header(): array {
+        return getallheaders();
+    }
 }

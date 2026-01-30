@@ -59,24 +59,24 @@ class SubmissionController {
                     'lat' => $lat,
                 ],
                 'date' => $postData['date'] ?? null,
-                'jwt_token' => $postData['jwt_token'] ?? '',
             ];
+            $headers = $request->header();
         }
 
         // Prüfe, ob jwt_token vorhanden ist
-        if (empty($data['jwt_token'])) {
+        if (empty($headers['Authorization: Bearer'])) {
             Response::json(["message" => "Authorization required: JWT token missing"], 401);
             return;
         }
 
         $auth = new Auth();
-        $valid = $auth->validate_JWT($data["jwt_token"]);
+        $valid = $auth->validate_JWT($headers['Authorization: Bearer']);
         if (!$valid) {
             Response::json(["message" => "Authorization required: Invalid JWT"], 401);
             return;
         }
 
-        $user_id = $auth->getUserIdFromJWT($data["jwt_token"]);
+        $user_id = $auth->getUserIdFromJWT($headers['Authorization: Bearer']);
         if (!$user_id) {
             Response::json(["message" => "Invalid user id"], 400);
             return;
@@ -159,9 +159,9 @@ class SubmissionController {
             Response::json($submission);
             return;
         } else {
-            $data = $request->json();
+            $headers = $request->header();
             $auth = new AuthController();
-            $userId = $auth->getUserId($data['jwt_token']);
+            $userId = $auth->getUserId($headers['Authorization: Bearer'] ?? '');
             $submissions = $repo->getAll($userId);
             if (!$submissions) {
                 Response::json([
