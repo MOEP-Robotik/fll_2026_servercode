@@ -137,6 +137,8 @@ class SubmissionController {
 
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
+        $user->funde[] = $id;
+        $accountdb->updateFunde($user);
 
         new MailService()->sendConfirmation($submiss, $user);
 

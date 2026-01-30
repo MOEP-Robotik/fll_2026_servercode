@@ -70,4 +70,13 @@ class AccountDatabase{
         }
         return $this->db->lastInsertId();
     }
+
+    public function updateFunde(Account $account): bool {
+        $stmt = $this->db->prepare("UPDATE users SET funde = :funde WHERE id = :id");
+        $result = $stmt->execute([
+            ':funde' => json_encode($account->funde),
+            ':id' => $account->id
+        ]);
+        return $result;
+    }
 }
