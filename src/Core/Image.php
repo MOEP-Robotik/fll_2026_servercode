@@ -28,6 +28,7 @@ class Image {
         $mimeToExt = [
             'image/jpeg' => '.jpg',
             'image/jpg' => '.jpg',
+            'image/jfif' => '.jpg',
             'image/png' => '.png',
             'image/gif' => '.gif',
             'image/webp' => '.webp',
@@ -38,7 +39,7 @@ class Image {
     }
 
     public function isValidImg(): bool {
-        $allowed_types = ['image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/tif'];
+        $allowed_types = ['image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/tif', 'image/jpeg', 'image/jfif', 'image/tiff'];
         return in_array($this->mimetype, $allowed_types);
     }
 
