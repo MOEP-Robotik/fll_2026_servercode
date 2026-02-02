@@ -12,23 +12,24 @@ use Models\UserInfo;
 
 class AuthController {
     public function authenticate(Request $request): void {
-        if (!$request->post()){
-            Response::json(['message' => 'Wrong Method (Try POST)'], 405);
+        if (!$request->post() && !$request->get()){
+            Response::json(['message' => 'Wrong Method (Try POST or GET)'], 405);
             return;
         }
         $data = $request->json();
+        $header = $request->header();
         switch ($request->path()){
             case "/api/auth/login":
                 $this->loginRequest($data['email'], $data['password']);
                 return;
             case "/api/auth/validate":
-                $this->validateToken($data['jwt_token']);
+                $this->validateToken($header['Authorization']);
                 return;
             case "/api/auth/register":
                 $this->registerRequest($data['email'], $data['password'], $data['vorname'], $data['nachname'], $data['plz'], $data['telefonnummer']);
                 return;
             case "/api/auth/userinfo":
-                $this->getUserInfo($data['jwt_token']);
+                $this->getUserInfo($header['Authorization']);
                 return;
             default:
                 Response::json(['message' => "Resource not found"], 404);
