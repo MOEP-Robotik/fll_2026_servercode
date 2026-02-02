@@ -33,7 +33,7 @@ class Imagelist {
         $imagesData = [];
         foreach ($this->images as $img) {
             $imagesData[] = [
-                'filename' => $img->filename,
+                'UUID' => $img->UUID,
                 'filepath' => $img->filepath,
                 'mimetype' => $img->mimetype,
                 'filesize' => $img->filesize,
@@ -60,5 +60,21 @@ class Imagelist {
             $paths[] = $img->filepath;
         }
         return $paths;
+    }
+
+    public function convertImgs($compresseion = 100): bool {
+        foreach ($this->images as $img) {
+            $image = new Imagick($img->filepath);
+            $image->setImageFormat('tif');
+            $images->setCompressionQuality($compression);
+            try {
+                $image->writeImage($this->UUID . 'tif');
+                $image->clear();
+                $image->destroy();
+            } catch (Exception $e) {
+                echo 'Fehler: ' . $e->getMessage();
+            }
+
+        }
     }
 }
