@@ -62,6 +62,6 @@ class ImageController {
     }
 
     public function convertImages(): bool {
-        return $this->images->convertImages();
+        return $this->images->convertImgs();
     }
 }

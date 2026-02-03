@@ -5,6 +5,9 @@ namespace Core;
 Maybe sinnvoll --> sonst kann man nicht schon mit JSON arbeiten, finde ich
 */
 
+use Exception;
+use Imagick;
+
 class Imagelist {
     private array $images = [];
 
@@ -62,19 +65,20 @@ class Imagelist {
         return $paths;
     }
 
-    public function convertImgs($compresseion = 100): bool {
+    public function convertImgs($compression = 0): bool {
         foreach ($this->images as $img) {
             $image = new Imagick($img->filepath);
             $image->setImageFormat('tif');
-            $images->setCompressionQuality($compression);
+            $image->setCompressionQuality($compression);
             try {
-                $image->writeImage($this->UUID . 'tif');
+                $image->writeImage($img->folderpath . $img->UUID . '.tif');
                 $image->clear();
                 $image->destroy();
             } catch (Exception $e) {
                 echo 'Fehler: ' . $e->getMessage();
+                return false;
             }
-
         }
+        return true;
     }
 }
