@@ -57,6 +57,11 @@ class ImageController {
         }
         $json =  $submiss->files;
         $imglist = new Imagelist($json);
+        $this->images = $imglist;
         return $imglist;
+    }
+
+    public function convertImages(): bool {
+        return $this->images->convertImgs();
     }
 }

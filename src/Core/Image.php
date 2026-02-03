@@ -6,9 +6,10 @@ require __DIR__ . '/../../vendor/autoload.php';
 class Image {
     public string $folderpath;
     public string $filepath;
-    public string $filename;
     public string $mimetype;
     public int $filesize;
+    public string $extension;
+    public string $UUID;
 
     public function __construct(
         string $mimetype,
@@ -17,8 +18,9 @@ class Image {
     ) {
         // Dateiendung basierend auf MIME-Type hinzufügen
         $extension = $this->getExtensionFromMimeType($mimetype);
-        $this->filename = UUID::guidv4() . $extension;
-        $this->filepath = $folderpath . $this->filename;
+        $this->UUID = UUID::guidv4();
+        $this->extension = $extension;
+        $this->filepath = $folderpath . $this->UUID . $this->extension;
         $this->mimetype = $mimetype;
         $this->filesize = $filesize;
         $this->folderpath = $folderpath;
@@ -44,15 +46,14 @@ class Image {
     }
 
     public static function fromJSON(array $data): Image {
-        // Erstelle ein Dummy-Image und überschreibe dann die Werte
         $image = new self($data['mimetype'], $data['filesize'], dirname($data['filepath']) . '/');
-        $image->filename = $data['filename'];
+        $image->UUID = $data['UUID'];
         $image->filepath = $data['filepath'];
+
         return $image;
     }
 
     public function saveImg(string $tempFilePath): bool {
-        // Verzeichnis erstellen, falls nicht vorhanden
         if (!is_dir($this->folderpath)) {
             if (!mkdir($this->folderpath, 0755, true)) {
                 $error = error_get_last();
