@@ -1,7 +1,7 @@
 <?php
 namespace Models;
 
-//Das ist (noch) nur für die Authentification !!!
+//Das ist (noch) nur für die Authorization !!!
 /*
 Account (DB):
     id: int (von DB generiert)
@@ -13,6 +13,7 @@ Account (DB):
     telefonnummer: text
     funde: array<submission_id> (-> array<id>)
 */
+
 class PartialAccount {
     public int $id; //muss nicht null sein können, weil der Account definitiv schon existieren muss
     public string $passhash;
