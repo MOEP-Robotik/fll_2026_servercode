@@ -1,8 +1,6 @@
 <?php
 namespace Models;
 
-use Core\Imagelist;
-
 /*
 Submissions (DB):
     id: int (von DB generiert)
@@ -21,5 +19,4 @@ class Submission {
     public string $date;
     public string | null  $files;
     public string | null $timestamp;
-
 }

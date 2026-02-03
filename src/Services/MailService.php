@@ -1,6 +1,7 @@
 <?php
 namespace Services;
 
+use Core\ImageList;
 use Dotenv\Dotenv;
 use Models\Account;
 use Models\Submission;
@@ -15,7 +16,7 @@ class MailService {
         $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
     }
 
-    public function getEmailContent(string $vorname, string $nachname, string $title, string $description, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {
+    private function getEmailContent(string $vorname, string $nachname, string $title, string $description, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {
         $base = <<<'HTML'
             <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff">
                 <tr>
@@ -99,6 +100,18 @@ class MailService {
         return $base;
     }
 
+    private function buildAttachments(Submission $submission): array {
+        $imageList = new ImageList($submission->files);
+        $returnArray = [];
+        foreach ($imageList->get() as $image) {
+            $returnArray[] = [
+                'content' => base64_encode(file_get_contents($image->filepath)),
+                'filename' => $image->UUID . "." . $image->extension,
+            ];
+        }
+        return $returnArray;
+    }
+
     public function sendConfirmation(Submission $submission, Account $account): void {
         $this->resend->emails->send([
             'from'    => $_ENV['EMAIL_SENDER'],
@@ -116,6 +129,7 @@ class MailService {
                 $account->plz,
                 \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE')
             ),
+            'attachments' => $this->buildAttachments($submission)
         ]);
     }
 }

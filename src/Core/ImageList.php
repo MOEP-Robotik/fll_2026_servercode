@@ -8,11 +8,11 @@ Maybe sinnvoll --> sonst kann man nicht schon mit JSON arbeiten, finde ich
 use Exception;
 use Imagick;
 
-class Imagelist {
+class ImageList {
     private array $images = [];
 
     public function __construct(string | null $JSON = null) {
-        if (!is_null($JSON)) {
+        if ($JSON !== null) {
             $this->createFromJSON($JSON);
         }
     }

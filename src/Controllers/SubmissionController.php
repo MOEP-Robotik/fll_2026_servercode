@@ -127,7 +127,7 @@ class SubmissionController {
         if (!empty($files)) {
             try {
                 $imgs = new ImageController($user_id);# lieber mit der submission_id irgendwie machen
-                $imgs->uploadImgs($files, $user_id);
+                $imgs->uploadImgs($files);
                 $submiss->files = $imgs->images->toJSON();
             } catch (\Exception $e) {
                 Response::json(['message' => 'Error uploading images: ' . $e->getMessage()], 400);
@@ -149,8 +149,8 @@ class SubmissionController {
         $repo = new SubmissionDatabase();
 
         $parts = explode('/', $request->path());
-        if (count($parts) > 3) {
-            $id = intval($parts[3]);
+        if (\count($parts) > 3) {
+            $id = \intval($parts[3]);
             $submission = $repo->getById($id);
             if (!$submission) {
                 Response::json([
@@ -194,7 +194,7 @@ class SubmissionController {
         $data->telephone = $row->telephone;*/
 
         $csv = new CSV();
-        $filename = 'submission_' . $submission_id . '.csv'; //TODO: konkreten Dateipfad festlegen
+        $filename = "submission_$submission_id.csv"; //TODO: konkreten Dateipfad festlegen
 
         try {
             $csv->open($filename);

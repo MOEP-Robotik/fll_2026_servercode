@@ -20,7 +20,7 @@ class Image {
         $extension = $this->getExtensionFromMimeType($mimetype);
         $this->UUID = UUID::guidv4();
         $this->extension = $extension;
-        $this->filepath = $folderpath . $this->UUID . $this->extension;
+        $this->filepath = "{$folderpath}{$this->UUID}{$this->extension}";
         $this->mimetype = $mimetype;
         $this->filesize = $filesize;
         $this->folderpath = $folderpath;
@@ -42,7 +42,7 @@ class Image {
 
     public function isValidImg(): bool {
         $allowed_types = ['image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/tif', 'image/jpeg', 'image/jfif', 'image/tiff'];
-        return in_array($this->mimetype, $allowed_types);
+        return \in_array($this->mimetype, $allowed_types);
     }
 
     public static function fromJSON(array $data): Image {
