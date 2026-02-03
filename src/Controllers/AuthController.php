@@ -31,6 +31,9 @@ class AuthController {
             case "/api/auth/userinfo":
                 $this->getUserInfo($header['Authorization']);
                 return;
+            case "/api/auth/requestguest":
+                $this->requestGuest();
+                return;
             default:
                 Response::json(['message' => "Resource not found"], 404);
                 return;
@@ -38,10 +41,15 @@ class AuthController {
     }
 
     public function loginRequest(string $email, string $password): void {
+        if ($email == "Gast") {
+            Response::json(['message' => "Login as guest not allowed"], 403);
+            return;
+        }
+
         $accountdb = new AccountDatabase();
         $account = $accountdb->getByEmail($email);
         if (!$account) {
-            Response::json(['message' => 'User not found'], 404);
+            Response::json(['message' => "User not found"], 404);
             return;
         }
         $passfromDB = $account->passhash;
@@ -121,6 +129,11 @@ class AuthController {
         Response::json($userinfo);
         return $userinfo;
     }
+
+    public function requestGuest(): string {
+        $this->registerRequest("Gast", "Gast", "Gast", "Gast", 0, "Gast");
+    }
+
     public function getUserId(string $token): int {
         $auth = new Auth();
         $valid = $auth->validate_JWT($token);
