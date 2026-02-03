@@ -130,7 +130,7 @@ class AuthController {
         return $userinfo;
     }
 
-    public function requestGuest(): string {
+    public function requestGuest() {
         $this->registerRequest("Gast", "Gast", "Gast", "Gast", 0, "Gast");
     }
 
