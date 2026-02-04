@@ -4,6 +4,7 @@ namespace Core;
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Models\CSVData;
+use Exception;
 
 class CSV {
     private $stream = null;
@@ -13,14 +14,14 @@ class CSV {
 
     public function open(bool $clearFile = false): void {
         if ($this->filename === null) {
-            throw new \Exception("Filename muss gesetzt werden");
+            throw new Exception("Filename muss gesetzt werden");
         }
 
         try {
             if ($clearFile) {
                 $this->stream = fopen($this->filename, "w");
                 if ($this->stream === false){
-                    throw new \Exception("Problem beim Öffnen der Datei");
+                    throw new Exception("Problem beim Öffnen der Datei");
                 }
 
                 fputcsv($this->stream, $this->head);
@@ -33,20 +34,20 @@ class CSV {
                 fclose($check);
 
                 if ($headFromFile !== $this->head) {
-                    throw new \Exception("Datei mit falschem Header gewählt");
+                    throw new Exception("Datei mit falschem Header gewählt");
                 }
 
                 $this->stream = fopen($this->filename, "a");
 
                 if ($this->stream === false) {
-                    throw new \Exception("Problem beim Öffnen der Datei");
+                    throw new Exception("Problem beim Öffnen der Datei");
                 }
 
             } else {
                 $this->stream = fopen($this->filename, "w");
 
                 if ($this->stream === false) {
-                    throw new \Exception("Problem beim Öffnen der Datei");
+                    throw new Exception("Problem beim Öffnen der Datei");
                 }
 
                 fputcsv($this->stream, $this->head);
@@ -58,12 +59,12 @@ class CSV {
 
     public function writeArr(array $data): bool {
         if ($this->stream === null) {
-            throw new \Exception("File muss vorher geöffnet werden");
+            throw new Exception("File muss vorher geöffnet werden");
         }
 
         foreach ($data as $row) {
             if (!($row instanceof CSVData)) {
-                throw new \Exception("Array enthält ein nicht CSVData Objekt");
+                throw new Exception("Array enthält ein nicht CSVData Objekt");
             }
             fputcsv($this->stream, $row->toArray());
         }
@@ -73,7 +74,7 @@ class CSV {
 
     public function writeOne(CSVData $data): bool {
         if ($this->stream === null) {
-            throw new \Exception("File muss vorher geöffnet werden");
+            throw new Exception("File muss vorher geöffnet werden");
         }
 
         fputcsv($this->stream, $data->toArray());

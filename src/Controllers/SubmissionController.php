@@ -7,13 +7,13 @@ use Core\Auth;
 use Core\Request;
 use Core\Response;
 use Database\AccountDatabase;
-use Models\Stats;
 use Models\Submission;
 use Models\Coordinate;
 use Database\SubmissionDatabase;
 use Services\MailService;
 use Core\CSV;
 use Models\CSVData;
+use Models\Size;
 use Controllers\ImageController;
 
 class SubmissionController {
@@ -26,25 +26,21 @@ class SubmissionController {
     }
 
     private function new(Request $request): void {
-        // Unterstütze sowohl JSON als auch FormData
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? ''; //JSON
         if (strpos($contentType, 'application/json') !== false) {
             $data = $request->json();
         } else {
             // FormData verarbeiten
             $postData = $request->postData();
-            
-            // Koordinaten aus verschiedenen Formaten extrahieren
+
             $lon = null;
             $lat = null;
-            
-            // Versuche verschachteltes Array (wenn PHP es automatisch geparst hat)
+
             if (isset($postData['coordinate']) && is_array($postData['coordinate'])) {
                 $lon = $postData['coordinate']['lon'] ?? null;
                 $lat = $postData['coordinate']['lat'] ?? null;
             }
             
-            // Falls nicht, versuche bracket-Notation (coordinate[lon])
             if ($lon === null && isset($postData['coordinate[lon]'])) {
                 $lon = $postData['coordinate[lon]'];
             }
@@ -72,6 +68,13 @@ class SubmissionController {
                 Response::json(["message" => "Invalid user id"], 400);
                 return;
             }
+
+            $sizedata = json_decode($postData['size'], true);
+            $size = new Size();
+            $size->length = $sizedata['length'];
+            $size->width = $sizedata['width'];
+            $size->height = $sizedata['height'];
+            $size->weight = $sizedata['weight'];
             
             $data = [
                 'coordinate' => [
@@ -80,6 +83,8 @@ class SubmissionController {
                 ],
                 'date' => $postData['date'] ?? null,
                 'files' => $postData['files'] ?? null,
+                'material' => $postData['material'],
+                'size' => $size,
                 'user_id' => $user_id,
             ];
         }
@@ -120,8 +125,9 @@ class SubmissionController {
         $submiss = new Submission();
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
-        $submiss->user_id = $user_id;
+        $submiss->files = $data['files'] ?? null;
         $submiss->material = $data['material']; 
+        $submiss->user_id = $user_id;
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -195,7 +201,7 @@ class SubmissionController {
         $data->material = $row->material;
 
         $csv = new CSV();
-        $filename = "submission_$submission_id.csv"; //TODO: konkreten Dateipfad festlegen
+        $filename = "submission_" . (string)$submission_id . ".csv"; //TODO: konkreten Dateipfad festlegen
 
         try {
             $csv->filename = $filename;
