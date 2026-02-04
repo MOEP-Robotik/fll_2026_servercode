@@ -18,7 +18,7 @@ class SubmissionDatabase {
     public function create(Submission $data): int
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (title, description, location, date, files) VALUES (:t, :d, :l, :z, :f)"
+            "INSERT INTO submissions (location, date, files, user_id) VALUES (:l, :d, :f, :u)"
         );
         $location = json_encode([
             'lon' => $data->coordinate->lon,
@@ -26,11 +26,10 @@ class SubmissionDatabase {
         ]);
         $files = json_encode($data->files);
         $stmt->execute([
-            ':t' => $data->title,
-            ':d' => $data->description ?? '',
             ':l' => $location,
-            ':z' => $data->date,
-            ':f' => $files
+            ':d' => $data->date,
+            ':f' => $files,
+            ':u' => $data->user_id
         ]);
 
         return $this->db->lastInsertId();
@@ -66,11 +65,11 @@ class SubmissionDatabase {
 
             $submission = new Submission();
             $submission->id = (int)$row['id'];
-            $submission->title = (string)$row['title'];
-            $submission->description = (string)$row['description'];
             $submission->coordinate = $location;
             $submission->files = $row['files'] ?? null;
             $submission->timestamp = (string)$row['created_at'];
+            $submission->date = (string)$row['date'];
+            $submission->user_id = (int)$row['user_id'];
 
             $submissions[] = $submission;
         }
@@ -93,11 +92,11 @@ class SubmissionDatabase {
 
         $submission = new Submission();
         $submission->id = (int)$row['id'];
-        $submission->title = (string)$row['title'];
-        $submission->description = (string)$row['description'];
         $submission->coordinate = $location;
         $submission->files = $row['files'] ?? null;
         $submission->timestamp = (string)$row['created_at'];
+        $submission->date = (string)$row['date'];
+        $submission->user_id = (int)$row['user_id'];
 
         return $submission;
     }

@@ -53,7 +53,6 @@ class CSV {
             }
         } catch (\Throwable $e) {
             error_log($e->getMessage());
-            throw $e;
         }
     }
 
@@ -63,7 +62,10 @@ class CSV {
         }
 
         foreach ($data as $row) {
-            fputcsv($this->stream, $row);
+            if (!($row instanceof CSVData)) {
+                throw new \Exception("Array enthält ein nicht CSVData Objekt");
+            }
+            fputcsv($this->stream, $row->toArray());
         }
 
         return true;
