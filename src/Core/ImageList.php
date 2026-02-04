@@ -48,7 +48,7 @@ class ImageList {
     private function createFromJSON(string $JSON): void {
         $imagesData = json_decode($JSON, true);
         if (!is_array($imagesData)) {
-            throw new \Exception('Ungültiges JSON-Format für Images');
+            throw new Exception('Ungültiges JSON-Format für Images');
         }
         
         $this->images = [];

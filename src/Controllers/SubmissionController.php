@@ -13,6 +13,7 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Core\CSV;
 use Models\CSVData;
+use Models\Size;
 use Controllers\ImageController;
 
 class SubmissionController {
@@ -25,25 +26,21 @@ class SubmissionController {
     }
 
     private function new(Request $request): void {
-        // Unterstütze sowohl JSON als auch FormData
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? ''; //JSON
         if (strpos($contentType, 'application/json') !== false) {
             $data = $request->json();
         } else {
             // FormData verarbeiten
             $postData = $request->postData();
-            
-            // Koordinaten aus verschiedenen Formaten extrahieren
+
             $lon = null;
             $lat = null;
-            
-            // Versuche verschachteltes Array (wenn PHP es automatisch geparst hat)
+
             if (isset($postData['coordinate']) && is_array($postData['coordinate'])) {
                 $lon = $postData['coordinate']['lon'] ?? null;
                 $lat = $postData['coordinate']['lat'] ?? null;
             }
             
-            // Falls nicht, versuche bracket-Notation (coordinate[lon])
             if ($lon === null && isset($postData['coordinate[lon]'])) {
                 $lon = $postData['coordinate[lon]'];
             }
@@ -51,35 +48,45 @@ class SubmissionController {
                 $lat = $postData['coordinate[lat]'];
             }
             
+            $headers = $request->header();
+
+            // Prüfe, ob jwt_token vorhanden ist
+            if (empty($headers['Authorization'])) {
+                Response::json(["message" => "Authorization required: JWT token missing"], 401);
+                return;
+            }
+            // prüft, ob der JWT gültig ist
+            $auth = new Auth();
+            $valid = $auth->validate_JWT($headers['Authorization']);
+            if (!$valid) {
+                Response::json(["message" => "Authorization required: Invalid JWT"], 401);
+                return;
+            }
+            // Extrahiere user_id aus dem JWT
+            $user_id = $auth->getUserIdFromJWT($headers['Authorization']);
+            if (!$user_id) {
+                Response::json(["message" => "Invalid user id"], 400);
+                return;
+            }
+
+            $sizedata = json_decode($postData['size'], true);
+            $size = new Size();
+            $size->length = $sizedata['length'];
+            $size->width = $sizedata['width'];
+            $size->height = $sizedata['height'];
+            $size->weight = $sizedata['weight'];
+            
             $data = [
-                'title' => $postData['title'] ?? '',
-                'description' => $postData['description'] ?? '',
                 'coordinate' => [
                     'lon' => $lon,
                     'lat' => $lat,
                 ],
                 'date' => $postData['date'] ?? null,
+                'files' => $postData['files'] ?? null,
+                'material' => $postData['material'],
+                'size' => $size,
+                'user_id' => $user_id,
             ];
-            $headers = $request->header();
-        }
-
-        // Prüfe, ob jwt_token vorhanden ist
-        if (empty($headers['Authorization'])) {
-            Response::json(["message" => "Authorization required: JWT token missing"], 401);
-            return;
-        }
-
-        $auth = new Auth();
-        $valid = $auth->validate_JWT($headers['Authorization']);
-        if (!$valid) {
-            Response::json(["message" => "Authorization required: Invalid JWT"], 401);
-            return;
-        }
-
-        $user_id = $auth->getUserIdFromJWT($headers['Authorization']);
-        if (!$user_id) {
-            Response::json(["message" => "Invalid user id"], 400);
-            return;
         }
 
         $accountdb = new AccountDatabase();
@@ -94,7 +101,7 @@ class SubmissionController {
             return;
         }
 
-        // Prüfe Koordinaten: empty(0) würde true zurückgeben, daher explizit auf null prüfen
+        // Prüfe Koordinaten: empty würde true zurückgeben, daher explizit auf null prüfen
         if (!isset($data['coordinate']) || !is_array($data['coordinate'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
             return;
@@ -116,11 +123,11 @@ class SubmissionController {
         $coordinate->lat = (float)$data['coordinate']['lat'];
 
         $submiss = new Submission();
-        $submiss->id = $data['id'] ?? null;
-        $submiss->title = $data['title'];
-        $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
+        $submiss->files = $data['files'] ?? null;
+        $submiss->material = $data['material']; 
+        $submiss->user_id = $user_id;
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -182,22 +189,23 @@ class SubmissionController {
         if (!$row) {
             return false;
         }
+
         $coordinate = new Coordinate();
         $coordinate->lon = (float)$row->coordinate->lon;
         $coordinate->lat = (float)$row->coordinate->lat;
 
         $data = new CSVData();
-        $data->title = $row->title;
-        $data->description = $row->description;
         $data->coordinate = $coordinate;
-        /*$data->email = $row->email;
-        $data->telephone = $row->telephone;*/
+        $data->date = $row->date;
+        $data->user_id = $row->user_id;
+        $data->material = $row->material;
 
         $csv = new CSV();
-        $filename = "submission_$submission_id.csv"; //TODO: konkreten Dateipfad festlegen
+        $filename = "submission_" . (string)$submission_id . ".csv"; //TODO: konkreten Dateipfad festlegen
 
         try {
-            $csv->open($filename);
+            $csv->filename = $filename;
+            $csv->open(false);
             $csv->writeOne($data);
             $csv->close();
         } catch (\Throwable $e) {

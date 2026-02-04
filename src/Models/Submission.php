@@ -3,20 +3,26 @@ namespace Models;
 
 /*
 Submissions (DB):
-    id: int (von DB generiert)
-    title: text
-    description: text
-    location: coordinate
-    date: text
-    files: JSON-Objekt mit Array
-    created_at: timestamp (von DB generiert)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    location TEXT,
+    date TEXT,
+    length INTEGER,
+    width INTEGER,
+    height INTEGER,
+    weight INTEGER,
+    files TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 */
 class Submission {
     public int | null $id = null;
-    public string $title;
-    public string $description;
     public Coordinate $coordinate;
     public string $date;
     public string | null  $files;
+    public string $material;
+    public Size $size;
     public string | null $timestamp;
+    public int $user_id;
+    //public string $gemeinde; //bisher ignoriert weil noch keine Ahnung...
 }
