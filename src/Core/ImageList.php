@@ -83,9 +83,12 @@ class ImageList {
 
                 $tifFilesize = filesize($tifPath);
 
-                $tifImg = new Image('image/tif', $tifFilesize, $img->folderpath);
-                $tifImg->UUID = $img->UUID;
-                $tifImg->filepath = $tifPath;
+                $tifImg = Image::fromJSON([
+                    'UUID' => $img->UUID,
+                    'filepath' => $tifPath,
+                    'mimetype' => 'image/tif',
+                    'filesize' => $tifFilesize,
+                ]);
 
                 $newImages[] = $tifImg;
 
