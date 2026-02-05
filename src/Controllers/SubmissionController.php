@@ -96,11 +96,6 @@ class SubmissionController {
             return;
         }
 
-        if (empty($data['title'])) {
-            Response::json(['message' => 'Title missing'], 400);
-            return;
-        }
-
         // Prüfe Koordinaten: empty würde true zurückgeben, daher explizit auf null prüfen
         if (!isset($data['coordinate']) || !is_array($data['coordinate'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
@@ -128,6 +123,7 @@ class SubmissionController {
         $submiss->files = $data['files'] ?? null;
         $submiss->material = $data['material']; 
         $submiss->user_id = $user_id;
+        $submiss->size = $size;
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
