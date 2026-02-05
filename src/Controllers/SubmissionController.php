@@ -86,6 +86,10 @@ class SubmissionController {
                 return;
             }
 
+            if (!filter_var($guest['email'], FILTER_VALIDATE_EMAIL)) {
+                Response::json(["message" => "Ungültige E-Mail-Adresse für Gast angegeben"], 400);
+                return;
+            }
             // Account-Daten mit Guest-Daten aktualisieren
             $user->vorname = $guest['vorname'];
             $user->nachname = $guest['nachname'];
