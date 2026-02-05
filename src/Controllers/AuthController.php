@@ -4,6 +4,7 @@ namespace Controllers;
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Auth;
+use Core\UUID;
 use Database\AccountDatabase;
 use Core\Request;
 use Core\Response;
@@ -131,7 +132,8 @@ class AuthController {
     }
 
     public function requestGuest() {
-        $this->registerRequest("Gast", "Gast", "Gast", "Gast", 0, "Gast");
+        $guestID = UUID::guidv4();
+        $this->registerRequest("Gast_$guestID", "Gast", "Gast", "Gast", 0, "Gast");
     }
 
     public function getUserId(string $token): int {
