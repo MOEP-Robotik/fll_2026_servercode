@@ -133,7 +133,8 @@ class AuthController {
 
     public function requestGuest() {
         $guestID = UUID::guidv4();
-        $this->registerRequest("Gast_$guestID", "Gast", "Gast", "Gast", 0, "Gast");
+        $randomPassword = bin2hex(random_bytes(16));
+        $this->registerRequest("Gast_$guestID", $randomPassword, "Gast", "Gast", 0, "Gast");
     }
 
     public function getUserId(string $token): int {
