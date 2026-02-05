@@ -111,7 +111,7 @@ class MailService {
         $csv->open(true);
         $csv->writeOne($csvdata);
         $returnArray[] = [
-            "content"=> base64_encode(file_get_contents($csv->filepath)),
+            "content"=> file_get_contents($csv->filepath),
             'filename' => $csv->filename
         ];
         $csv->close();
