@@ -1,7 +1,8 @@
 # FLL 2026 Backend
 ## Requirements
-- `intl` Plugin (php.ini)
-- `pdo_sqlite` Plugin (php.ini)
+- `intl` Plugin
+- `pdo_sqlite` Plugin
+- `imagick` Plugin
 
 ## Deployment
 > [!IMPORTANT]
