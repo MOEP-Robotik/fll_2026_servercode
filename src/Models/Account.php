@@ -19,6 +19,6 @@ class Account {
     public string $passhash;
     public int $plz;
     public string $email;
-    public string $telefonnummer;
+    public string $telephone;
     public array $funde;
 }

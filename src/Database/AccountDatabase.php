@@ -47,7 +47,7 @@ class AccountDatabase{
         $account->passhash = $row['passhash'];
         $account->plz = $row['plz'];
         $account->email = $row['email'];
-        $account->telefonnummer = $row['telefonnummer'];
+        $account->telephone = $row['telefonnummer'];
         $account->funde = json_decode($row['funde']);  //TODO: wird vllt. noch nicht richtig geparsed 
 
         return $account;
@@ -61,7 +61,7 @@ class AccountDatabase{
             ':passhash' => $account->passhash,
             ':plz' => $account->plz,
             ':email' => $account->email,
-            ':telefonnummer' => $account->telefonnummer,
+            ':telefonnummer' => $account->telephone,
             ':funde' => json_encode($account->funde)
         ]);
         if (!$result) {

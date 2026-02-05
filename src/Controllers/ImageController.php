@@ -46,6 +46,7 @@ class ImageController {
                 }
             }
         }
+        $this->images->convertImgs(); //Bilder jetzt hier konvertieren, damit das später leichter ist
         return $this->folderpath;
     }
 
