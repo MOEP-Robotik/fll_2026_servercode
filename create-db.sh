@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     date TEXT,
     size TEXT,
     files TEXT,
+    material TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES users(id)

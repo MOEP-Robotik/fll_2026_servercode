@@ -17,7 +17,7 @@ class SubmissionDatabase {
 
     public function create(Submission $data): int {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (location, date, size, files, user_id) VALUES (:l, :d, :s, :f, :u)"
+            "INSERT INTO submissions (location, date, size, files, material, user_id) VALUES (:l, :d, :s, :f, :m, :u)"
         );
         $location = json_encode([
             'lon' => $data->coordinate->lon,
@@ -29,6 +29,7 @@ class SubmissionDatabase {
             ':d' => $data->date,
             ':s' => json_encode($data->size),
             ':f' => $files,
+            ':m' => $data->material,
             ':u' => $data->user_id,
         ]);
 
