@@ -5,24 +5,24 @@ namespace Controllers;
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Image;
-use Core\Imagelist;
+use Core\ImageList;
 use Database\SubmissionDatabase;
 
 class ImageController {
-    public Imagelist $images;
+    public ImageList $images;
     private array $conf;
     public string $folderpath;
 
     public function __construct(int $userId) {
         $this->conf = require __DIR__ . '/../../config/config.php';
         $this->folderpath = $this->conf['uploaded_img_path'] . $userId . '/';
-        $this->images = new Imagelist();
+        $this->images = new ImageList();
     }
 
-    public function uploadImgs(array $files): string{
+    public function uploadImgs(array $files): string {
         //Struktur: $_FILES['images]...
-        if (isset($files['images']) && is_array($files['images']['name'])) {
-            $fileCount = count($files['images']['name']);
+        if (isset($files['images']) && \is_array($files['images']['name'])) {
+            $fileCount = \count($files['images']['name']);
             for ($i = 0; $i < $fileCount; $i++) {
                 if ($files['images']['error'][$i] !== UPLOAD_ERR_OK) {
                     continue; // Überspringe Dateien mit Fehlern
@@ -56,7 +56,12 @@ class ImageController {
             throw new \Exception("Submission existiert nicht");
         }
         $json =  $submiss->files;
-        $imglist = new Imagelist($json);
+        $imglist = new ImageList($json);
+        $this->images = $imglist;
         return $imglist;
+    }
+
+    public function convertImages(): bool {
+        return $this->images->convertImgs();
     }
 }

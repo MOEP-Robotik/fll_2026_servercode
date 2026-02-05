@@ -23,7 +23,7 @@ class Auth {
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expire,
-            'iss' => 'priarch', //unser erster Development Name (Danke an @imnotmaster)
+            'iss' => 'archiva', //unser zweiter Development Name (Danke an @EMMA_HAT_KEIN_GITUB)
             'sub' => $user_id
         ];
 
@@ -32,7 +32,10 @@ class Auth {
 
     public function validate_JWT(string $token): bool {
         try {
-            JWT::decode($token, new Key($this->jwtkey, 'HS256'));
+            $payload = (array) JWT::decode($token, new Key($this->jwtkey, 'HS256'));
+            if ($payload['exp'] < time()) {
+                return false;
+            }
             return true;
         } catch (\Throwable $e) {
             return false;

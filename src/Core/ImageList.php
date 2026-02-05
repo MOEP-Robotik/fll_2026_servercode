@@ -5,11 +5,14 @@ namespace Core;
 Maybe sinnvoll --> sonst kann man nicht schon mit JSON arbeiten, finde ich
 */
 
-class Imagelist {
+use Exception;
+use Imagick;
+
+class ImageList {
     private array $images = [];
 
     public function __construct(string | null $JSON = null) {
-        if (!is_null($JSON)) {
+        if ($JSON !== null) {
             $this->createFromJSON($JSON);
         }
     }
@@ -33,7 +36,7 @@ class Imagelist {
         $imagesData = [];
         foreach ($this->images as $img) {
             $imagesData[] = [
-                'filename' => $img->filename,
+                'UUID' => $img->UUID,
                 'filepath' => $img->filepath,
                 'mimetype' => $img->mimetype,
                 'filesize' => $img->filesize,
@@ -45,7 +48,7 @@ class Imagelist {
     private function createFromJSON(string $JSON): void {
         $imagesData = json_decode($JSON, true);
         if (!is_array($imagesData)) {
-            throw new \Exception('Ungültiges JSON-Format für Images');
+            throw new Exception('Ungültiges JSON-Format für Images');
         }
         
         $this->images = [];
@@ -60,5 +63,22 @@ class Imagelist {
             $paths[] = $img->filepath;
         }
         return $paths;
+    }
+
+    public function convertImgs($compression = 0): bool {
+        foreach ($this->images as $img) {
+            $image = new Imagick($img->filepath);
+            $image->setImageFormat('tif');
+            $image->setCompressionQuality($compression);
+            try {
+                $image->writeImage($img->folderpath . $img->UUID . '.tif');
+                $image->clear();
+                $image->destroy();
+            } catch (Exception $e) {
+                echo 'Fehler: ' . $e->getMessage();
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -6,19 +6,18 @@ require __DIR__ . '/../../vendor/autoload.php';
 use Core\Database;
 use Models\Coordinate;
 use Models\Submission;
+use Models\Size;
 
 class SubmissionDatabase {
     private $db;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->db = Database::get();
     }
 
-    public function create(Submission $data): int
-    {
+    public function create(Submission $data): int {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (title, description, location, date, files) VALUES (:t, :d, :l, :z, :f)"
+            "INSERT INTO submissions (location, date, length, width, height, weight, files, user_id) VALUES (:l, :d, :le, :wi, :he, :we, :f, :u)"
         );
         $location = json_encode([
             'lon' => $data->coordinate->lon,
@@ -26,11 +25,14 @@ class SubmissionDatabase {
         ]);
         $files = json_encode($data->files);
         $stmt->execute([
-            ':t' => $data->title,
-            ':d' => $data->description ?? '',
             ':l' => $location,
-            ':z' => $data->date,
-            ':f' => $files
+            ':d' => $data->date,
+            'le' => $data->size->length,
+            'wi' => $data->size->width,
+            'he' => $data->size->height,
+            'we' => $data->size->weight,
+            ':f' => $files,
+            ':u' => $data->user_id,
         ]);
 
         return $this->db->lastInsertId();
@@ -64,13 +66,22 @@ class SubmissionDatabase {
             $location->lon = (float)$coordData['lon'];
             $location->lat = (float)$coordData['lat'];
 
+            $sizedata = json_decode($row['size'], true);
+            $size = new Size();
+            $size->length = $sizedata['length'];
+            $size->width = $sizedata['width'];
+            $size->height = $sizedata['height'];
+            $size->weight = $sizedata['weight'];
+
             $submission = new Submission();
             $submission->id = (int)$row['id'];
-            $submission->title = (string)$row['title'];
-            $submission->description = (string)$row['description'];
             $submission->coordinate = $location;
+            $submission->date = (string)$row['date'];
             $submission->files = $row['files'] ?? null;
+            $submission->material = $row['material'];
+            $submission->size = $size;
             $submission->timestamp = (string)$row['created_at'];
+            $submission->user_id = (int)$row['user_id'];
 
             $submissions[] = $submission;
         }
@@ -86,18 +97,28 @@ class SubmissionDatabase {
         if (!$row) {
             return false;
         }
+
         $coordData = json_decode($row['location'], true);
         $location = new Coordinate();
         $location->lon = (float)$coordData['lon'];
         $location->lat = (float)$coordData['lat'];
 
+        $sizedata = json_decode($row['size'], true);
+        $size = new Size();
+        $size->length = $sizedata['length'];
+        $size->width = $sizedata['width'];
+        $size->height = $sizedata['height'];
+        $size->weight = $sizedata['weight'];
+
         $submission = new Submission();
         $submission->id = (int)$row['id'];
-        $submission->title = (string)$row['title'];
-        $submission->description = (string)$row['description'];
         $submission->coordinate = $location;
+        $submission->date = (string)$row['date'];
         $submission->files = $row['files'] ?? null;
+        $submission->material = $row['material'];
+        $submission->size = $size;
         $submission->timestamp = (string)$row['created_at'];
+        $submission->user_id = (int)$row['user_id'];
 
         return $submission;
     }
