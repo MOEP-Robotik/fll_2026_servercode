@@ -8,6 +8,6 @@ class Size {
     public int | null $weight;
     public function toString()
     {
-        return "". $this->length ."". $this->width . "". $this->height ."". $this->weight;
+        return "{$this->length}{$this->width}{$this->height}{$this->weight}";
     }
 }

@@ -4,6 +4,7 @@ namespace Controllers;
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Core\Auth;
+use Core\UUID;
 use Database\AccountDatabase;
 use Core\Request;
 use Core\Response;
@@ -31,6 +32,9 @@ class AuthController {
             case "/api/auth/userinfo":
                 $this->getUserInfo($header['Authorization']);
                 return;
+            case "/api/auth/requestguest":
+                $this->requestGuest();
+                return;
             default:
                 Response::json(['message' => "Resource not found"], 404);
                 return;
@@ -38,10 +42,15 @@ class AuthController {
     }
 
     public function loginRequest(string $email, string $password): void {
+        if ($email === "Gast") {
+            Response::json(['message' => "Login as guest not allowed"], 403);
+            return;
+        }
+
         $accountdb = new AccountDatabase();
         $account = $accountdb->getByEmail($email);
         if (!$account) {
-            Response::json(['message' => 'User not found'], 404);
+            Response::json(['message' => "User not found"], 404);
             return;
         }
         $passfromDB = $account->passhash;
@@ -121,6 +130,13 @@ class AuthController {
         Response::json($userinfo);
         return $userinfo;
     }
+
+    public function requestGuest() {
+        $guestID = UUID::guidv4();
+        $randomPassword = bin2hex(random_bytes(16));
+        $this->registerRequest("Gast_$guestID", $randomPassword, "Gast", "Gast", 0, "Gast");
+    }
+
     public function getUserId(string $token): int {
         $auth = new Auth();
         $valid = $auth->validate_JWT($token);
