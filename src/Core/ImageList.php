@@ -66,19 +66,40 @@ class ImageList {
     }
 
     public function convertImgs($compression = 0): bool {
+        $newImages = [];
+
         foreach ($this->images as $img) {
             $image = new Imagick($img->filepath);
             $image->setImageFormat('tif');
             $image->setCompressionQuality($compression);
+
+            $tifPath = $img->folderpath . $img->UUID . '.tif';
+
             try {
-                $image->writeImage($img->folderpath . $img->UUID . '.tif');
+                $image->writeImage($tifPath);
+
                 $image->clear();
                 $image->destroy();
+
+                $tifFilesize = filesize($tifPath);
+
+                $tifImg = new Image('image/tif', $tifFilesize, $img->folderpath);
+                $tifImg->UUID = $img->UUID;
+                $tifImg->filepath = $tifPath;
+
+                $newImages[] = $tifImg;
+
+                if (file_exists($img->filepath)) {
+                    unlink($img->filepath);
+                }
+
             } catch (Exception $e) {
                 echo 'Fehler: ' . $e->getMessage();
                 return false;
             }
         }
+        $this->images = $newImages;
+
         return true;
     }
 }

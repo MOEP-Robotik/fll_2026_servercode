@@ -82,7 +82,7 @@ class AuthController {
         $account->vorname = $vorname;
         $account->nachname = $nachname;
         $account->plz = $plz;
-        $account->telefonnummer = $telefonnummer;
+        $account->telephone = $telefonnummer;
         $account->funde = [];
 
         $newId = $accountdb->create($account);
@@ -115,7 +115,7 @@ class AuthController {
         $userinfo->nachname = $user->nachname;
         $userinfo->plz = $user->plz;
         $userinfo->email = $user->email;
-        $userinfo->telefonnummer = $user->telefonnummer;
+        $userinfo->telefonnummer = $user->telephone;
         $userinfo->funde = $user->funde;
 
         Response::json($userinfo);

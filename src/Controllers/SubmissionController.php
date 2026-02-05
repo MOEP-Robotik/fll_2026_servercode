@@ -143,7 +143,11 @@ class SubmissionController {
         $user->funde[] = $id;
         $accountdb->updateFunde($user);
 
-        new MailService()->sendConfirmation($submiss, $user);
+        $submiss->user_id = $user_id;
+        $submiss->id = $id;
+        $mailS = new MailService();
+        $mailS->sendConfirmation($submiss, $user);
+        $mailS->sendLVR($submiss, $user);
 
         Response::json(['id' => $id]);
     }
@@ -177,37 +181,5 @@ class SubmissionController {
             Response::json($submissions);
             return;
         }
-    }
-
-    public function exportCSV(int $submission_id): bool { //gibt success zurück; könnte maybe den Dateipfad zurückgeben
-        $repo = new SubmissionDatabase();
-        $row = $repo->getById($submission_id);
-        if (!$row) {
-            return false;
-        }
-
-        $coordinate = new Coordinate();
-        $coordinate->lon = (float)$row->coordinate->lon;
-        $coordinate->lat = (float)$row->coordinate->lat;
-
-        $data = new CSVData();
-        $data->coordinate = $coordinate;
-        $data->date = $row->date;
-        $data->user_id = $row->user_id;
-        $data->material = $row->material;
-
-        $csv = new CSV();
-        $filename = "submission_" . (string)$submission_id . ".csv"; //TODO: konkreten Dateipfad festlegen
-
-        try {
-            $csv->filename = $filename;
-            $csv->open(false);
-            $csv->writeOne($data);
-            $csv->close();
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        return true;
     }
 }

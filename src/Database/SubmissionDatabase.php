@@ -44,7 +44,7 @@ class SubmissionDatabase {
         ]);
         $row = $userquery->fetch();
         if (!$row) {
-            error_log("WTF (siehe SubmissionController9");
+            error_log("WTF (siehe SubmissionDatabase Z.47");
             return [];
         }
         $rows = [];
