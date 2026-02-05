@@ -99,7 +99,7 @@ class SubmissionController {
             $user->nachname = $guest['nachname'];
             $user->email = $guest['email'];
             $user->plz = (int)$guest['plz'];
-            $user->telefonnummer = $guest['telefonnummer'];
+            $user->telephone = $guest['telefonnummer'];
         }
 
         // Prüfe Koordinaten: empty würde true zurückgeben, daher explizit auf null prüfen

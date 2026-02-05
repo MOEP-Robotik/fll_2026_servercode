@@ -87,7 +87,7 @@ class AccountDatabase{
             ':nachname' => $account->nachname,
             ':plz' => $account->plz,
             ':email' => $account->email,
-            ':telefonnummer' => $account->telefonnummer,
+            ':telefonnummer' => $account->telephone,
             ':funde' => json_encode($account->funde),
             ':id' => $account->id
         ]);
