@@ -79,4 +79,18 @@ class AccountDatabase{
         ]);
         return $result;
     }
+
+    public function update(Account $account): bool {
+        $stmt = $this->db->prepare("UPDATE users SET vorname = :vorname, nachname = :nachname, plz = :plz, email = :email, telefonnummer = :telefonnummer, funde = :funde WHERE id = :id");
+        $result = $stmt->execute([
+            ':vorname' => $account->vorname,
+            ':nachname' => $account->nachname,
+            ':plz' => $account->plz,
+            ':email' => $account->email,
+            ':telefonnummer' => $account->telefonnummer,
+            ':funde' => json_encode($account->funde),
+            ':id' => $account->id
+        ]);
+        return $result;
+    }
 }

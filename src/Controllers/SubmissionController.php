@@ -51,6 +51,20 @@ class SubmissionController {
                 $lat = $postData['coordinate[lat]'];
             }
             
+            // Guest-Daten extrahieren
+            $guest = null;
+            if (isset($postData['guest']) && is_array($postData['guest'])) {
+                $guest = $postData['guest'];
+            } else if (isset($postData['guest[vorname]'])) {
+                $guest = [
+                    'vorname' => $postData['guest[vorname]'] ?? '',
+                    'nachname' => $postData['guest[nachname]'] ?? '',
+                    'email' => $postData['guest[email]'] ?? '',
+                    'plz' => $postData['guest[plz]'] ?? '',
+                    'telefonnummer' => $postData['guest[telefonnummer]'] ?? '',
+                ];
+            }
+
             $data = [
                 'title' => $postData['title'] ?? '',
                 'description' => $postData['description'] ?? '',
@@ -59,6 +73,7 @@ class SubmissionController {
                     'lat' => $lat,
                 ],
                 'date' => $postData['date'] ?? null,
+                'guest' => $guest,
             ];
             $headers = $request->header();
         }
@@ -87,6 +102,23 @@ class SubmissionController {
         if (!$user) {
             Response::json(['message' => 'User not found'], 404);
             return;
+        }
+
+        // Guest-Daten verarbeiten
+        $isGuest = !empty($data['guest']);
+        if ($isGuest) {
+            $guest = $data['guest'];
+            if (empty($guest['vorname']) || empty($guest['nachname']) || empty($guest['email']) || empty($guest['plz']) || empty($guest['telefonnummer'])) {
+                Response::json(["message" => "Alle Gastfelder sind erforderlich (Vorname, Nachname, E-Mail, PLZ, Telefonnummer)"], 400);
+                return;
+            }
+
+            // Account-Daten mit Guest-Daten aktualisieren
+            $user->vorname = $guest['vorname'];
+            $user->nachname = $guest['nachname'];
+            $user->email = $guest['email'];
+            $user->plz = (int)$guest['plz'];
+            $user->telefonnummer = $guest['telefonnummer'];
         }
 
         if (empty($data['title'])) {
@@ -121,6 +153,10 @@ class SubmissionController {
         $submiss->description = $data['description'] ?? '';
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'];
+        $submiss->files = "";
+
+        $jsonSubmission = json_encode($submiss);
+        error_log("Received submission: $jsonSubmission");
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -138,7 +174,11 @@ class SubmissionController {
         $repo = new SubmissionDatabase();
         $id = $repo->create($submiss);
         $user->funde[] = $id;
-        $accountdb->updateFunde($user);
+        if ($isGuest) {
+            $accountdb->update($user);
+        } else {
+            $accountdb->updateFunde($user);
+        }
 
         new MailService()->sendConfirmation($submiss, $user);
 
