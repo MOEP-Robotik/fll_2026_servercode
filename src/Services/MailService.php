@@ -99,7 +99,7 @@ class MailService {
                 'content' => base64_encode(file_get_contents($image->filepath)),
                 'filename' => $image->UUID . "." . $image->extension,
             ];
-        }   
+        }
         $csvdata = new CSVData();
         $csvdata->material = $submission->material;
         $csvdata->coordinate = $submission->coordinate;
