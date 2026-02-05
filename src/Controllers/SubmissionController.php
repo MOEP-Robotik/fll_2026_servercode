@@ -143,7 +143,6 @@ class SubmissionController {
         $user->funde[] = $id;
         $accountdb->updateFunde($user);
 
-        $submiss->user_id = $user_id;
         $submiss->id = $id;
         $mailS = new MailService();
         $mailS->sendConfirmation($submiss, $user);
