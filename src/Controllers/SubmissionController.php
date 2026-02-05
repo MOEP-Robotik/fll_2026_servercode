@@ -26,92 +26,49 @@ class SubmissionController {
     }
 
     private function new(Request $request): void {
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? ''; //JSON
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $headers = $request->header();
+        
+        // Prüfe, ob jwt_token vorhanden ist
+        if (empty($headers['Authorization'])) {
+            Response::json(["message" => "Authorization required: JWT token missing"], 401);
+            return;
+        }
+        
+        // prüft, ob der JWT gültig ist
+        $auth = new Auth();
+        $valid = $auth->validate_JWT($headers['Authorization']);
+        if (!$valid) {
+            Response::json(["message" => "Authorization required: Invalid JWT"], 401);
+            return;
+        }
+        
+        // Extrahiere user_id aus dem JWT
+        $user_id = $auth->getUserIdFromJWT($headers['Authorization']);
+        if (!$user_id) {
+            Response::json(["message" => "Invalid user id"], 400);
+            return;
+        }
+
         if (strpos($contentType, 'application/json') !== false) {
             $data = $request->json();
         } else {
-            // FormData verarbeiten
-            $postData = $request->postData();
-
-            $lon = null;
-            $lat = null;
-
-            if (isset($postData['coordinate']) && is_array($postData['coordinate'])) {
-                $lon = $postData['coordinate']['lon'] ?? null;
-                $lat = $postData['coordinate']['lat'] ?? null;
-            }
+            // FormData verarbeiten - automatisch nested arrays parsen
+            $data = $request->formData();
             
-            if ($lon === null && isset($postData['coordinate[lon]'])) {
-                $lon = $postData['coordinate[lon]'];
+            // Size aus JSON string parsen falls vorhanden
+            if (isset($data['size']) && is_string($data['size'])) {
+                $sizedata = json_decode($data['size'], true);
+                $size = new Size();
+                $size->length = $sizedata['length'] ?? null;
+                $size->width = $sizedata['width'] ?? null;
+                $size->height = $sizedata['height'] ?? null;
+                $size->weight = $sizedata['weight'] ?? null;
+                $data['size'] = $size;
             }
-            if ($lat === null && isset($postData['coordinate[lat]'])) {
-                $lat = $postData['coordinate[lat]'];
-            }
-            
-            // Guest-Daten extrahieren
-            $guest = null;
-            if (isset($postData['guest']) && is_array($postData['guest'])) {
-                $guest = $postData['guest'];
-            } else if (isset($postData['guest[vorname]'])) {
-                $guest = [
-                    'vorname' => $postData['guest[vorname]'] ?? '',
-                    'nachname' => $postData['guest[nachname]'] ?? '',
-                    'email' => $postData['guest[email]'] ?? '',
-                    'plz' => $postData['guest[plz]'] ?? '',
-                    'telefonnummer' => $postData['guest[telefonnummer]'] ?? '',
-                ];
-            }
-
-            $data = [
-                'title' => $postData['title'] ?? '',
-                'description' => $postData['description'] ?? '',
-                'coordinate' => [
-                    'lon' => $lon,
-                    'lat' => $lat,
-                ],
-                'date' => $postData['date'] ?? null,
-                'guest' => $guest,
-            ];
-            $headers = $request->header();
-
-            // Prüfe, ob jwt_token vorhanden ist
-            if (empty($headers['Authorization'])) {
-                Response::json(["message" => "Authorization required: JWT token missing"], 401);
-                return;
-            }
-            // prüft, ob der JWT gültig ist
-            $auth = new Auth();
-            $valid = $auth->validate_JWT($headers['Authorization']);
-            if (!$valid) {
-                Response::json(["message" => "Authorization required: Invalid JWT"], 401);
-                return;
-            }
-            // Extrahiere user_id aus dem JWT
-            $user_id = $auth->getUserIdFromJWT($headers['Authorization']);
-            if (!$user_id) {
-                Response::json(["message" => "Invalid user id"], 400);
-                return;
-            }
-
-            $sizedata = json_decode($postData['size'], true);
-            $size = new Size();
-            $size->length = $sizedata['length'];
-            $size->width = $sizedata['width'];
-            $size->height = $sizedata['height'];
-            $size->weight = $sizedata['weight'];
-            
-            $data = [
-                'coordinate' => [
-                    'lon' => $lon,
-                    'lat' => $lat,
-                ],
-                'date' => $postData['date'] ?? null,
-                'files' => $postData['files'] ?? null,
-                'material' => $postData['material'],
-                'size' => $size,
-                'user_id' => $user_id,
-            ];
         }
+        
+        $data['user_id'] = $user_id;
 
         $accountdb = new AccountDatabase();
         $user = $accountdb->getById($user_id);
@@ -137,11 +94,6 @@ class SubmissionController {
             $user->telefonnummer = $guest['telefonnummer'];
         }
 
-        if (empty($data['title'])) {
-            Response::json(['message' => 'Title missing'], 400);
-            return;
-        }
-
         // Prüfe Koordinaten: empty würde true zurückgeben, daher explizit auf null prüfen
         if (!isset($data['coordinate']) || !is_array($data['coordinate'])) {
             Response::json(['message' => 'Coordinate missing or invalid'], 400);
@@ -165,11 +117,11 @@ class SubmissionController {
 
         $submiss = new Submission();
         $submiss->coordinate = $coordinate;
-        $submiss->date = $data['date'];
+        $submiss->date = $data['date'] ?? null;
         $submiss->files = $data['files'] ?? null;
-        $submiss->material = $data['material']; 
+        $submiss->material = $data['material'] ?? ""; 
         $submiss->user_id = $user_id;
-        $submiss->size = $size;
+        $submiss->size = $data['size'] ?? new Size();
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
