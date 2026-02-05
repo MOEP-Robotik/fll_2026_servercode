@@ -59,12 +59,16 @@ class SubmissionController {
             // Size aus JSON string parsen falls vorhanden
             if (isset($data['size']) && is_string($data['size'])) {
                 $sizedata = json_decode($data['size'], true);
-                $size = new Size();
-                $size->length = $sizedata['length'] ?? null;
-                $size->width = $sizedata['width'] ?? null;
-                $size->height = $sizedata['height'] ?? null;
-                $size->weight = $sizedata['weight'] ?? null;
-                $data['size'] = $size;
+
+                // Validierung: Nur bei erfolgreichem JSON-Decode und Array-Struktur ein Size-Objekt erstellen
+                if (json_last_error() === JSON_ERROR_NONE && is_array($sizedata)) {
+                    $size = new Size();
+                    $size->length = $sizedata['length'] ?? null;
+                    $size->width = $sizedata['width'] ?? null;
+                    $size->height = $sizedata['height'] ?? null;
+                    $size->weight = $sizedata['weight'] ?? null;
+                    $data['size'] = $size;
+                }
             }
         }
         
