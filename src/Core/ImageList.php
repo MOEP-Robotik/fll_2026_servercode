@@ -97,6 +97,9 @@ class ImageList {
                 }
 
             } catch (Exception $e) {
+                $image->clear();
+                $image->destroy();
+                
                 error_log(
                     'Fehler bei der Bildkonvertierung für "' . $img->filepath . '": ' . $e->getMessage()
                 );

@@ -17,8 +17,8 @@ class CSVData {
     public function toArray(): array {
         return [
             'material' => $this->material, 
-            'lon' => $this->coordinate->lon, 
-            'lat' => $this->coordinate->lat, 
+            'longitude' => $this->coordinate->lon, 
+            'latitude' => $this->coordinate->lat, 
             'email' => $this->email, 
             'telephone' => $this->telephone, 
             'date' => $this->date,

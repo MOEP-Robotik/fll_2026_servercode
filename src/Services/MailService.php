@@ -94,6 +94,7 @@ class MailService {
 
     private function buildAttachments(Submission $submission, Account $account): array {
         $imageList = new ImageList($submission->files);
+        $returnArray = [];
         foreach ($imageList->get() as $image) {
             $returnArray[] = [
                 'content' => base64_encode(file_get_contents($image->filepath)),
@@ -111,7 +112,7 @@ class MailService {
         $csv->open(true);
         $csv->writeOne($csvdata);
         $returnArray[] = [
-            "content"=> file_get_contents($csv->filepath),
+            "content" => file_get_contents($csv->filepath),
             'filename' => $csv->filename
         ];
         $csv->close();
