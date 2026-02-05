@@ -169,6 +169,7 @@ class SubmissionController {
         $submiss->files = $data['files'] ?? null;
         $submiss->material = $data['material']; 
         $submiss->user_id = $user_id;
+        $submiss->size = $size;
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
