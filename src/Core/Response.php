@@ -11,8 +11,6 @@ class Response {
 
         header('Content-Type: application/json');
         http_response_code($status);
-        $dataDump = var_export($data, true);
-        error_log("response ($status): $dataDump");
         echo json_encode([
             "success" => $success,
             "status" => $status,
