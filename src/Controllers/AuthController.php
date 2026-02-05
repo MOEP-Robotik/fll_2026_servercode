@@ -42,7 +42,7 @@ class AuthController {
     }
 
     public function loginRequest(string $email, string $password): void {
-        if ($email == "Gast") {
+        if ($email === "Gast") {
             Response::json(['message' => "Login as guest not allowed"], 403);
             return;
         }
