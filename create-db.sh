@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS submissions (
     location TEXT,
     date TEXT,
     size TEXT,
+    comment TEXT,
+    datierung TEXT,
     files TEXT,
     material TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,

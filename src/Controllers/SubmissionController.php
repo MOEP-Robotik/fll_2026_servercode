@@ -11,8 +11,6 @@ use Models\Submission;
 use Models\Coordinate;
 use Database\SubmissionDatabase;
 use Services\MailService;
-use Core\CSV;
-use Models\CSVData;
 use Models\Size;
 use Controllers\ImageController;
 
@@ -130,6 +128,9 @@ class SubmissionController {
         $submiss->material = $data['material'] ?? ""; 
         $submiss->user_id = $user_id;
         $submiss->size = $data['size'] ?? new Size();
+        $submiss->comment = $data['comment'];
+        $submiss->datierung = $data['datierung'];
+        $submiss->user_id = $user_id;
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();

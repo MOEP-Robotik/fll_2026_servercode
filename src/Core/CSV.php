@@ -18,7 +18,7 @@ class CSV {
         $this->filepath = $this->conf['uploaded_img_path'] . $userId . "/" . $filename;
     }
 
-    private array $head = ["material", "longitude", "latitude", "email", "telephone", "date"];
+    private array $head = [/*"Aktivitaet",*//*"Punktnr",*/ "Rechts", "Hoch", /*"Hoehe",*//*"Matkuerzel,"*/ "Anzahl", "Gewicht", "Material", "Kommentar", /*"Datkode",*/ "Datierung", "Datum", "AnspracheVon"];
 
     public function open(bool $clearFile = false): void {
         if ($this->filepath === null) {

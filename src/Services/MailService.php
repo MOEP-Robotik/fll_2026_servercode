@@ -104,8 +104,11 @@ class MailService {
         $csvdata = new CSVData();
         $csvdata->material = $submission->material;
         $csvdata->coordinate = $submission->coordinate;
-        $csvdata->email = $account->email;
-        $csvdata->telephone = $account->telephone;
+        $csvdata->comment = $submission->comment;
+        $csvdata->size = $submission->size;
+        $csvdata->datierung = $submission->datierung;
+        $csvdata->vorname = $account->vorname;
+        $csvdata->nachname = $account->nachname;
         $csvdata->date = $submission->date;
 
         $csv = new CSV($submission->user_id, "{$submission->id}.csv");
@@ -215,7 +218,7 @@ class MailService {
         $timestamp = \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE');
         $this->resend->emails->send([
             'from'    => $_ENV['EMAIL_SENDER'],
-            'to'      => $localeService->getnearestemail(),
+            'to'      => $localeService->dev(),//$localeService->getnearestemail($submission->coordinate),
             'subject' => "Neuer Fund am - {$timestamp} eingegangen",
             'html'    => $this->getEmailContentLVR(
                 $account->vorname,
