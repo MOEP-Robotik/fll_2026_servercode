@@ -128,8 +128,8 @@ class SubmissionController {
         $submiss->material = $data['material'] ?? ""; 
         $submiss->user_id = $user_id;
         $submiss->size = $data['size'] ?? new Size();
-        $submiss->comment = $data['comment'];
-        $submiss->datierung = $data['datierung'];
+        //$submiss->comment = $data['comment'] ?? null;
+        //$submiss->datierung = $data['datierung'];
         $submiss->user_id = $user_id;
 
         // Bilder verarbeiten, falls vorhanden

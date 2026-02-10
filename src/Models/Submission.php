@@ -18,9 +18,9 @@ Submissions (DB):
 class Submission {
     public int | null $id = null;
     public Coordinate $coordinate;
-    public string $comment; //noch nicht im Frontend
-    public string $datierung; //noch nicht im Frontend
-    public string $date;
+    public string | null $comment = null; //noch nicht im Frontend
+    public string | null $datierung = null; //noch nicht im Frontend
+    public string | null $date = null;
     public string | null  $files;
     public string $material;
     public Size $size;
