@@ -17,7 +17,7 @@ class SubmissionDatabase {
 
     public function create(Submission $data): int {
         $stmt = $this->db->prepare(
-            "INSERT INTO submissions (location, date, size, files, material, user_id) VALUES (:l, :d, :s, :f, :m, :u)"
+            "INSERT INTO submissions (location, date, size, comment, count, datierung files, material, user_id) VALUES (:l, :dt, :s, :cm, :cn, :dg, :f, :m, :u)"
         );
         $location = json_encode([
             'lon' => $data->coordinate->lon,
@@ -26,8 +26,11 @@ class SubmissionDatabase {
         $files = json_encode($data->files);
         $stmt->execute([
             ':l' => $location,
-            ':d' => $data->date,
+            ':dt' => $data->date,
             ':s' => json_encode($data->size),
+            ':cm' => $data->comment,
+            ':cn' => $data->count,
+            ':dg' => $data->datierung,
             ':f' => $files,
             ':m' => $data->material,
             ':u' => $data->user_id,
@@ -75,6 +78,9 @@ class SubmissionDatabase {
             $submission->id = (int)$row['id'];
             $submission->coordinate = $location;
             $submission->date = (string)$row['date'];
+            $submission->count = (int)$row['count'];
+            $submission->comment = (string)$row['comment'];
+            $submission->datierung = (string)$row['datierung'];
             $submission->files = $row['files'] ?? null;
             $submission->material = $row['material'];
             $submission->size = $size;
@@ -112,6 +118,9 @@ class SubmissionDatabase {
         $submission->id = (int)$row['id'];
         $submission->coordinate = $location;
         $submission->date = (string)$row['date'];
+        $submission->count = (int)$row['count'];
+        $submission->comment = (string)$row['comment'];
+        $submission->datierung = (string)$row['datierung'];
         $submission->files = $row['files'] ?? null;
         $submission->material = $row['material'];
         $submission->size = $size;
