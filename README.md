@@ -21,23 +21,6 @@ php -S localhost:8000 -t public
 
 Fertig! Die API kann nun aufgerufen werden unter `http://localhost:8000`. Nur sehr uninteressant ohne frontend...
 
-## Routen
-- `GET /api/health`
-- `GET /api/submissions`
-- `POST /api/submissions`
-- `GET /api/submissions/{id}`
+## Frontend
 
-## Einen Fund beitragen
-```bash
-curl -X POST http://localhost:8000/api/submissions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Bronze fibula 5",
-    "description": "Found near river bank during construction work",
-    "coordinate": {
-      "lon": 6.9603,
-      "lat": 50.9375
-    },
-    "email": "example@example.com"
-  }'
-```
+Das Frontend kann man [hier](https://github.com/MOEP-Robotik/Forschungsprojekt_fll_2026) finden!
