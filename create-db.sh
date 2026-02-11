@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     date TEXT,
     size TEXT,
     comment TEXT,
-    count INTEGER;
+    count INTEGER,
     datierung TEXT,
     files TEXT,
     material TEXT,
