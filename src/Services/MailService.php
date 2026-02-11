@@ -92,7 +92,7 @@ class MailService {
         return $base;
     }
 
-    private function buildAttachments(Submission $submission, Account $account): array {
+    private function buildAttachmentsLVR(Submission $submission, Account $account): array {
         $imageList = new ImageList($submission->files);
         $returnArray = [];
         foreach ($imageList->get() as $image) {
@@ -122,6 +122,18 @@ class MailService {
         return $returnArray;
     }
 
+    private function buildAttachmentsConfirmation(Submission $submission, Account $account): array {
+        $imageList = new ImageList($submission->files);
+        $returnArray = [];
+        foreach ($imageList->get() as $image) {
+            $returnArray[] = [
+                'content' => base64_encode(file_get_contents($image->filepath)),
+                'filename' => $image->UUID . "." . $image->extension,
+            ];
+        }
+        return $returnArray;
+    }
+
     public function sendConfirmation(Submission $submission, Account $account): void {
         $this->resend->emails->send([
             'from'    => $_ENV['EMAIL_SENDER'],
@@ -137,7 +149,7 @@ class MailService {
                 $account->plz,
                 \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE')
             ),
-            'attachments' => $this->buildAttachments($submission, $account)
+            'attachments' => $this->buildAttachmentsConfirmation($submission, $account)
         ]);
     }
 
@@ -230,7 +242,7 @@ class MailService {
                 $account->plz,
                 $timestamp
             ),
-            'attachments' => $this->buildAttachments($submission, $account)
+            'attachments' => $this->buildAttachmentsLVR($submission, $account)
         ]);
     }
 }
