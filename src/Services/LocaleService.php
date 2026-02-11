@@ -1,8 +1,10 @@
 <?php
 namespace Services;
 
-use Locale;
+require __DIR__ . '/../../vendor/autoload.php';
+
 use Models\Coordinate;
+use Dotenv\Dotenv;
 
 class LocaleService {
     public function getNearestEmail(Coordinate $cords): string {
@@ -11,7 +13,10 @@ class LocaleService {
         $gemeinde = $gemeindeserv->getGemeinde($cords);
         return $gemeinden[$gemeinde]['email'];
     }
-    public function dev() {
-        return "fgier2010@gmail.com";
+    public function dev(): string {
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+        $dotenv->load();
+        $email = $_ENV['devmail'];
+        return $email;
     }
 }
