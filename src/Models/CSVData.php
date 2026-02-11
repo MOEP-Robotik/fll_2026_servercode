@@ -21,9 +21,12 @@ class CSVData {
         return [
             'Rechts' => $this->coordinate->lon, 
             'Hoch' => $this->coordinate->lat, 
+            'Hoehe' => "",
+            'Matkuerzel' => "",
             'Gewicht' => $this->size->weight,
             'Material' => $this->material, 
             'Kommentar' => $comment,
+            'Datkode' => "",
             'Datierung' => $this->datierung,
             'Datum' => $this->date,
             'AnspracheVon' => $ansprache,
