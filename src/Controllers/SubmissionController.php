@@ -172,7 +172,7 @@ class SubmissionController {
         $sent->lvr = true;
         $sent->confirmation = true;
 
-        /*$pool = Pool::create();
+        $pool = Pool::create();
         
         $pool->add(function() use ($mailService, $submiss, $user, $sent) {
             $mailService->sendConfirmation($submiss, $user);
@@ -190,7 +190,7 @@ class SubmissionController {
             $sent->lvr = false;
         });
         
-        $pool->wait();*/
+        $pool->wait();
         $submiss->sentInfo = $sent;
         $repo->updateSent($id, $sent);
     }
@@ -222,7 +222,6 @@ class SubmissionController {
                 return;
             }
             Response::json($submissions);
-            error_log(print_r($submissions, true)); 
             return;
         }
     }
