@@ -13,6 +13,8 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Models\Size;
 use Controllers\ImageController;
+use Spatie\Async\Pool;
+use Models\SentInfo;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -156,11 +158,41 @@ class SubmissionController {
         }
 
         $submiss->id = $id;
-        $mailS = new MailService();
-        $mailS->sendConfirmation($submiss, $user);
-        $mailS->sendLVR($submiss, $user);
+        Response::json(['id' => $id], 202);
+        
+        if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+            fastcgi_finish_request();
+        } else {
+            error_log("does not exist. Try using php-fpm");
+        }
+        
+        $mailService = new MailService();
 
-        Response::json(['id' => $id]);
+        $sent = new SentInfo();
+        $sent->lvr = true;
+        $sent->confirmation = true;
+
+        /*$pool = Pool::create();
+        
+        $pool->add(function() use ($mailService, $submiss, $user, $sent) {
+            $mailService->sendConfirmation($submiss, $user);
+            $sent->confirmation = true;
+        })->catch(function(\Throwable $exception) use ($sent) {
+            error_log("Error sending confirmation mail: " . $exception->getMessage());
+            $sent->confirmation = false;
+        });
+        
+        $pool->add(function() use ($mailService, $submiss, $user, $sent) {
+            $mailService->sendLVR($submiss, $user);
+            $sent->lvr = true;
+        })->catch(function(\Throwable $exception) use ($sent) {
+            error_log("Error sending LVR mail: " . $exception->getMessage());
+            $sent->lvr = false;
+        });
+        
+        $pool->wait();*/
+        $submiss->sentInfo = $sent;
+        $repo->updateSent($id, $sent);
     }
 
     private function get(Request $request): void {
@@ -190,6 +222,7 @@ class SubmissionController {
                 return;
             }
             Response::json($submissions);
+            error_log(print_r($submissions, true)); 
             return;
         }
     }

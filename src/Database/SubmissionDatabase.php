@@ -7,6 +7,7 @@ use Core\Database;
 use Models\Coordinate;
 use Models\Submission;
 use Models\Size;
+use Models\SentInfo;
 
 class SubmissionDatabase {
     private $db;
@@ -16,6 +17,7 @@ class SubmissionDatabase {
     }
 
     public function create(Submission $data): int {
+        //sentInfo muss nicht hier sein, weilo das im Normalfall nicht existieren sollte
         $stmt = $this->db->prepare(
             "INSERT INTO submissions (location, date, size, comment, count, datierung, files, material, user_id) VALUES (:l, :dt, :s, :cm, :cn, :dg, :f, :m, :u)"
         );
@@ -82,10 +84,20 @@ class SubmissionDatabase {
             $submission->comment = (string)$row['comment'];
             $submission->datierung = (string)$row['datierung'];
             $submission->files = $row['files'] ?? null;
-            $submission->material = $row['material'];
+            $submission->material = $row['material'] ?? "";
             $submission->size = $size;
             $submission->timestamp = (string)$row['created_at'];
             $submission->user_id = (int)$row['user_id'];
+
+            if ($row['sent'] !== null) {
+                $sentdata = json_decode($row['sent'], true);
+                $submission->sentInfo = new SentInfo(
+                    $sentdata['confirmation'] ?? false,
+                    $sentdata['lvr'] ?? false
+                );
+            } else {
+                $submission->sentInfo = null;
+            }
 
             $submissions[] = $submission;
         }
@@ -127,6 +139,29 @@ class SubmissionDatabase {
         $submission->timestamp = (string)$row['created_at'];
         $submission->user_id = (int)$row['user_id'];
 
+        if ($row['sent'] !== null) {
+            $sentdata = json_decode($row['sent'], true);
+            $submission->sentInfo = new SentInfo(
+                $sentdata['confirmation'] ?? false,
+                $sentdata['lvr'] ?? false
+            );
+        } else {
+            $submission->sentInfo = null;
+        }
+
         return $submission;
+    }
+
+    public function updateSent (int $id, SentInfo $sent): bool {
+        $stmt = $this->db->prepare("UPDATE submissions SET sent = :sent WHERE id = :id");
+        $stmt->execute([
+            ':sent' => $sent->toJSON(),
+            ':id'=> $id
+        ]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return false;
+        }
+        return true;
     }
 }

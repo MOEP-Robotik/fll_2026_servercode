@@ -7,15 +7,22 @@ use Core\ImageList;
 use Dotenv\Dotenv;
 use Models\Account;
 use Models\Submission;
+use Services\LocaleService;
 
 class MailService {
     private \Resend\Client $resend;
+    private string $devmail;
+    private string $mailsender;
+    private LocaleService $localeservice;
 
     public function __construct() {
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
 
         $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
+        $this->devmail = $_ENV['devmail'];
+        $this->mailsender = $_ENV['EMAIL_SENDER'];
+        $this->localeservice = new LocaleService();
     }
 
     private function getEmailContentConfirmation(string $vorname, string $nachname, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {
@@ -136,7 +143,7 @@ class MailService {
 
     public function sendConfirmation(Submission $submission, Account $account): void {
         $this->resend->emails->send([
-            'from'    => $_ENV['EMAIL_SENDER'],
+            'from'    => $this->mailsender,
             'to'      => $account->email,
             'subject' => "Fundbeleg - {$submission->date} hinzugefügt",
             'html'    => $this->getEmailContentConfirmation(
@@ -229,8 +236,8 @@ class MailService {
         $localeService = new LocaleService();
         $timestamp = \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE');
         $this->resend->emails->send([
-            'from'    => $_ENV['EMAIL_SENDER'],
-            'to'      => $localeService->dev(),//$localeService->getnearestemail($submission->coordinate),
+            'from'    => $this->mailsender,
+            'to'      => $this->devmail, //oder halt $this->localeservice->getNearestEmail($submission->coordinate);
             'subject' => "Neuer Fund am - {$timestamp} eingegangen",
             'html'    => $this->getEmailContentLVR(
                 $account->vorname,
