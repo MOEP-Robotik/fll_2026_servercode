@@ -233,7 +233,6 @@ class MailService {
     }
 
     public function sendLVR(Submission $submission, Account $account): void{
-        $localeService = new LocaleService();
         $timestamp = \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE');
         $this->resend->emails->send([
             'from'    => $this->mailsender,

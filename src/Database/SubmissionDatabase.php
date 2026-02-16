@@ -43,19 +43,20 @@ class SubmissionDatabase {
 
     //returns Array with Submissions
     public function getAll(int $userId): array {
-        $userquery = $this->db->query("SELECT funde FROM users WHERE id = :id LIMIT 1");
+        $userquery = $this->db->prepare("SELECT funde FROM users WHERE id = :id LIMIT 1");
         $userquery->execute([
             ':id' => $userId
         ]);
         $row = $userquery->fetch();
         if (!$row) {
-            error_log("WTF (siehe SubmissionDatabase Z.47");
+            error_log("User not found in getAll: userId=$userId");
             return [];
         }
+        
         $rows = [];
         $funde = json_decode($row['funde'], true);
         
-        $stmt = $this->db->query("SELECT * FROM submissions WHERE id = :id LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM submissions WHERE id = :id LIMIT 1");
         foreach ($funde as $fund) {
             $stmt->execute([
                 ":id" => $fund

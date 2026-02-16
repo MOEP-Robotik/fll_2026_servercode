@@ -16,7 +16,7 @@ class Auth {
         $this->jwtkey = $_ENV['jwtsecret'];
     }
 
-    public function generate_JWT(int $user_id): string {
+    public function generateJWT(int $user_id): string {
         $issuedAt = time();
         $expire = $issuedAt + 3600; //1 Stunde gültig
 
