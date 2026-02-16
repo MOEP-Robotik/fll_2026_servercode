@@ -2,10 +2,10 @@
 namespace Models;
 
 class SentInfo {
-    public bool $confirmation;
-    public bool $lvr;
+    public bool | null $confirmation;
+    public bool | null $lvr = null;
 
-    public function __construct(bool $confirmation = false, bool $lvr = false) {
+    public function __construct(bool | null $confirmation = null, bool | null $lvr = null) {
         $this->confirmation = $confirmation;
         $this->lvr = $lvr;
     }

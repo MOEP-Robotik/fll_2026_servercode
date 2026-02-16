@@ -134,6 +134,7 @@ class SubmissionController {
         $submiss->comment = $data['comment'] ?? null;
         $submiss->datierung = $data['datierung'];
         $submiss->user_id = $user_id;
+        $submiss->sentInfo = new SentInfo();
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -168,35 +169,45 @@ class SubmissionController {
         
         $mailService = new MailService();
 
-        $sent = new SentInfo();
-        $sent->lvr = true;
-        $sent->confirmation = true;
+        $confirmationError = null;
+        $lvrError = null;
 
         $pool = Pool::create();
         
-        $pool->add(function() use ($mailService, $submiss, $user, $sent) {
+        $pool->add(function() use ($mailService, $submiss, $user) {
             $mailService->sendConfirmation($submiss, $user);
-            $sent->confirmation = true;
-        })->catch(function(\Throwable $exception) use ($sent) {
+            return true;
+        })->catch(function(\Throwable $exception) use (&$confirmationError) {
             error_log("Error sending confirmation mail: " . $exception->getMessage());
-            $sent->confirmation = false;
+            $confirmationError = $exception;
         });
         
-        $pool->add(function() use ($mailService, $submiss, $user, $sent) {
+        $pool->add(function() use ($mailService, $submiss, $user) {
             $mailService->sendLVR($submiss, $user);
-            $sent->lvr = true;
-        })->catch(function(\Throwable $exception) use ($sent) {
+            return true;
+        })->catch(function(\Throwable $exception) use (&$lvrError) {
             error_log("Error sending LVR mail: " . $exception->getMessage());
-            $sent->lvr = false;
+            $lvrError = $exception;
         });
         
         $pool->wait();
+        
+        $sent = new SentInfo(
+            $confirmationError === null,
+            $lvrError === null
+        );
         $submiss->sentInfo = $sent;
         $repo->updateSent($id, $sent);
     }
 
     private function get(Request $request): void {
         $repo = new SubmissionDatabase();
+
+        $auth = new AuthController();
+        $userId = $auth->getUserId($headers['Authorization'] ?? '');
+        $submissions = $repo->getAll($userId);
+        $accountdb = new AccountDatabase();
+        $account = $accountdb->getById($userId);
 
         $parts = explode('/', $request->path());
         if (\count($parts) > 3) {
@@ -208,18 +219,55 @@ class SubmissionController {
                 ], 404);
                 return;
             }
+
+            if ($submission->sentInfo->confirmation != true) {
+                if (is_null($submission->sentInfo->confirmation)) {
+                    //nichts, weil die Submission noch dabei ist, die Email zu senden
+                } else if ($submission->sentInfo->confirmation == false) {
+                    $mailS = new MailService();
+                    $mailS->sendConfirmation($submission, $account);
+                }
+            }
+
+            if ($submission->sentInfo->lvr != true) {
+                if (is_null($submission->sentInfo->lvr)) {
+                    //nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+                } else if ($submission->sentInfo->lvr == false) {
+                    $mailS = new MailService();
+                    $mailS->sendlvr($submission, $account);
+                }
+            }
+
             Response::json($submission);
             return;
         } else {
-            $headers = $request->header();
-            $auth = new AuthController();
-            $userId = $auth->getUserId($headers['Authorization'] ?? '');
             $submissions = $repo->getAll($userId);
+
+            foreach ($submissions as $submission) {
+                if ($submission->sentInfo->confirmation != true) {
+                    if (is_null($submission->sentInfo->confirmation)) {
+                        //nichts, weil die Submission noch dabei ist, die Email zu senden
+                    } else if ($submission->sentInfo->confirmation == false) {
+                        $mailS = new MailService();
+                        $mailS->sendConfirmation($submission, $account);
+                    }
+                }
+
+                if ($submission->sentInfo->lvr != true) {
+                    if (is_null($submission->sentInfo->lvr)) {
+                        //nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+                    } else if ($submission->sentInfo->lvr == false) {
+                        $mailS = new MailService();
+                        $mailS->sendlvr($submission, $account);
+                    }
+                }
+            }
+
             if (!$submissions) {
                 Response::json([
                     'message' => 'No submissions found'
                 ], 404);
-                return;
+            return;
             }
             Response::json($submissions);
             return;
