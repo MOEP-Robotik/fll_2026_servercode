@@ -57,7 +57,7 @@ class AuthController {
         $user_id = $account->id;
         if (password_verify($password, $passfromDB)){
             $auth = new Auth();
-            $jwt_token = $auth->generate_jwt($user_id);
+            $jwt_token = $auth->generateJWT($user_id);
             Response::json(['jwt_token' => $jwt_token], 200);
         } else {
             Response::json(['message' => "Invalid password"], 401);
@@ -101,7 +101,7 @@ class AuthController {
         }
 
         $auth = new Auth();
-        $jwt_token = $auth->generate_jwt($newId);
+        $jwt_token = $auth->generateJWT($newId);
 
         Response::json(['jwt_token' => $jwt_token]);
     }

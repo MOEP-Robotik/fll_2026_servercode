@@ -28,5 +28,6 @@ class Submission {
     public Size $size;
     public string | null $timestamp;
     public int $user_id;
+    public SentInfo | null $sentInfo;
     //public string $gemeinde; //bisher ignoriert weil noch keine Ahnung...
 }

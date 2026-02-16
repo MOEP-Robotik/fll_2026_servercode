@@ -9,9 +9,10 @@ use Exception;
 use Imagick;
 
 class ImageList {
-    private array $images = [];
+    private array $images;
 
     public function __construct(string | null $JSON = null) {
+        $this->images = [];
         if ($JSON !== null) {
             $this->createFromJSON($JSON);
         }
@@ -45,8 +46,18 @@ class ImageList {
         return json_encode($imagesData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    private function createFromJSON(string $JSON): void {
+    private function createFromJSON(string | null $JSON): void {
+        if ($JSON === null || $JSON === '' || $JSON === '[]') {
+            $this->images = [];
+            return;
+        }
+        
         $imagesData = json_decode($JSON, true);
+        
+        if (is_string($imagesData)) {
+            $imagesData = json_decode($imagesData, true);
+        }
+        
         if (!is_array($imagesData)) {
             throw new Exception('Ungültiges JSON-Format für Images');
         }

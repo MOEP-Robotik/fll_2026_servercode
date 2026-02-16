@@ -13,6 +13,8 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Models\Size;
 use Controllers\ImageController;
+use Spatie\Async\Pool;
+use Models\SentInfo;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -51,7 +53,6 @@ class SubmissionController {
         if (strpos($contentType, 'application/json') !== false) {
             $data = $request->json();
         } else {
-            // FormData verarbeiten - automatisch nested arrays parsen
             $data = $request->formData();
             
             // Size aus JSON string parsen falls vorhanden
@@ -132,6 +133,7 @@ class SubmissionController {
         $submiss->comment = $data['comment'] ?? null;
         $submiss->datierung = $data['datierung'];
         $submiss->user_id = $user_id;
+        $submiss->sentInfo = new SentInfo();
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -156,18 +158,56 @@ class SubmissionController {
         }
 
         $submiss->id = $id;
-        $mailS = new MailService();
-        $mailS->sendConfirmation($submiss, $user);
-        $mailS->sendLVR($submiss, $user);
+        Response::json(['id' => $id], 202);
+        
+        if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+            fastcgi_finish_request();
+        } else {
+            error_log("does not exist. Try using php-fpm");
+        }
+        
+        $mailService = new MailService();
 
-        Response::json(['id' => $id]);
+        $confirmationError = null;
+        $lvrError = null;
+
+        $pool = Pool::create();
+        
+        $pool->add(function() use ($mailService, $submiss, $user) {
+            $mailService->sendConfirmation($submiss, $user);
+            return true;
+        })->catch(function(\Throwable $exception) use (&$confirmationError) {
+            error_log("Error sending confirmation mail: " . $exception->getMessage());
+            $confirmationError = $exception;
+        });
+        
+        $pool->add(function() use ($mailService, $submiss, $user) {
+            $mailService->sendLVR($submiss, $user);
+            return true;
+        })->catch(function(\Throwable $exception) use (&$lvrError) {
+            error_log("Error sending LVR mail: " . $exception->getMessage());
+            $lvrError = $exception;
+        });
+        
+        $pool->wait();
+        
+        $sent = new SentInfo(
+            $confirmationError === null,
+            $lvrError === null
+        );
+        $submiss->sentInfo = $sent;
+        $repo->updateSent($id, $sent);
     }
 
     private function get(Request $request): void {
         $repo = new SubmissionDatabase();
 
+        $headers = $request->header();        
+        $auth = new AuthController();
+        $userId = $auth->getUserId($headers['Authorization'] ?? '');
+
         $parts = explode('/', $request->path());
-        if (\count($parts) > 3) {
+        if (\count($parts) > 3) { //suche via submission id
             $id = \intval($parts[3]);
             $submission = $repo->getById($id);
             if (!$submission) {
@@ -176,20 +216,132 @@ class SubmissionController {
                 ], 404);
                 return;
             }
+
+            if ($submission->sentInfo->confirmation != true) {
+
+                $mailService = new MailService();
+                $confirmationError = null;
+                $lvrError = null;
+                $accountdb = new AccountDatabase();
+                $user = $accountdb->getById($userId);
+
+                $pool = Pool::create();
+
+                if (is_null($submission->sentInfo->confirmation)) {
+                    //nichts, weil die Submission noch dabei ist, die Email zu senden
+                } else if ($submission->sentInfo->confirmation == false) {
+                    $pool->add(function () use ($mailService, $submission, $user) {
+                        $mailService->sendConfirmation($submission, $user);
+                        return true;
+                    })->catch(function (\Throwable $exception) use (&$confirmationError) {
+                        error_log("Error sending confirmation mail: " . $exception->getMessage());
+                        $confirmationError = $exception;
+                    });
+                }
+
+                if ($submission->sentInfo->lvr != true) {
+                    if (is_null($submission->sentInfo->lvr)) {
+                        //nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+                    } else if ($submission->sentInfo->lvr == false) {
+                        $pool->add(function () use ($mailService, $submission, $user) {
+                            $mailService->sendLVR($submission, $user);
+                            return true;
+                        })->catch(function (\Throwable $exception) use (&$lvrError) {
+                            error_log("Error sending LVR mail: " . $exception->getMessage());
+                            $lvrError = $exception;
+                        });
+                    }
+                }
+            }
             Response::json($submission);
+
+            if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+                fastcgi_finish_request();
+            } else {
+                error_log("does not exist. Try using php-fpm");
+            }
+
+            if (isset($pool)) {
+                $pool->wait();
+                $sent = new SentInfo(
+                    $confirmationError === null,
+                    $lvrError === null
+                );
+                $submission->sentInfo = $sent;
+                $repo->updateSent($id, $sent);
+            }
             return;
         } else {
-            $headers = $request->header();
-            $auth = new AuthController();
-            $userId = $auth->getUserId($headers['Authorization'] ?? '');
             $submissions = $repo->getAll($userId);
+
             if (!$submissions) {
                 Response::json([
                     'message' => 'No submissions found'
                 ], 404);
                 return;
             }
+
+            $pool = Pool::create();
+            $mailService = new MailService();
+            $errors = []; // Track errors by submission ID
+            $mailService = new MailService();
+            $accountdb = new AccountDatabase();
+            $account = $accountdb->getById($userId);
+
+            $pool = Pool::create();
+
+            foreach ($submissions as $submission) {
+                if ($submission->sentInfo->confirmation != true) {
+                    if (is_null($submission->sentInfo->confirmation)) {
+                        // nichts, weil die Submission noch dabei ist, die Email zu senden
+                    } else if ($submission->sentInfo->confirmation == false) {
+                        $pool->add(function () use ($mailService, $submission, $account) {
+                            $mailService->sendConfirmation($submission, $account);
+                            return true;
+                        })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                            error_log("Error sending confirmation mail for submission {$submission->id}: " . $exception->getMessage());
+                            $errors[$submission->id]['confirmation'] = $exception;
+                        });
+                    }
+                }
+
+                if ($submission->sentInfo->lvr != true) {
+                    if (is_null($submission->sentInfo->lvr)) {
+                        // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+                    } else if ($submission->sentInfo->lvr == false) {
+                        $pool->add(function () use ($mailService, $submission, $account) {
+                            $mailService->sendLVR($submission, $account);
+                            return true;
+                        })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                            error_log("Error sending LVR mail for submission {$submission->id}: " . $exception->getMessage());
+                            $errors[$submission->id]['lvr'] = $exception;
+                        });
+                    }
+                }
+            }
+
             Response::json($submissions);
+
+            if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+                fastcgi_finish_request();
+            } else {
+                error_log("does not exist. Try using php-fpm");
+            }
+
+            $pool->wait();
+
+            foreach ($submissions as $submission) {
+                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
+                $lvrError = $errors[$submission->id]['lvr'] ?? null;
+                
+                $sent = new SentInfo(
+                    $confirmationError === null,
+                    $lvrError === null
+                );
+                $submission->sentInfo = $sent;
+                $repo->updateSent($submission->id, $sent);
+            }
+
             return;
         }
     }
