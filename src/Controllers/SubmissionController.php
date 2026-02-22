@@ -307,7 +307,11 @@ class SubmissionController {
                     $confirmationError === null,
                     $lvrError === null
                 );
-                if ($submission->sentInfo !== $sent) {
+                if (
+                    $submission->sentInfo === null
+                    || $submission->sentInfo->confirmation !== $sent->confirmation
+                    || $submission->sentInfo->lvr !== $sent->lvr
+                ) {
                     $submission->sentInfo = $sent;
                     $repo->updateSent($submission->id, $sent);
                 }
