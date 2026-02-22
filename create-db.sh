@@ -33,6 +33,7 @@ chmod 644 "$DB_FILE"
 echo "Creating tables (if not exist)"
 
 # --- size ist ein JSON-Objekt mit Länge, Breite, Höhe, Gewicht ---
+# --- sent ist ein Objekt mit 2 bools
 sqlite3 "$DB_FILE" <<'SQL'
 CREATE TABLE IF NOT EXISTS submissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     files TEXT,
     material TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    sent TEXT,
     user_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

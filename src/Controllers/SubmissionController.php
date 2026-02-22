@@ -3,6 +3,7 @@ namespace Controllers;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
+use Dotenv\Dotenv;
 use Core\Auth;
 use Core\Request;
 use Core\Response;
@@ -13,6 +14,9 @@ use Database\SubmissionDatabase;
 use Services\MailService;
 use Models\Size;
 use Controllers\ImageController;
+use Spatie\Async\Pool;
+use Models\SentInfo;
+use Models\Account;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -51,7 +55,6 @@ class SubmissionController {
         if (strpos($contentType, 'application/json') !== false) {
             $data = $request->json();
         } else {
-            // FormData verarbeiten - automatisch nested arrays parsen
             $data = $request->formData();
             
             // Size aus JSON string parsen falls vorhanden
@@ -132,6 +135,7 @@ class SubmissionController {
         $submiss->comment = $data['comment'] ?? null;
         $submiss->datierung = $data['datierung'];
         $submiss->user_id = $user_id;
+        $submiss->sentInfo = new SentInfo();
 
         // Bilder verarbeiten, falls vorhanden
         $files = $request->files();
@@ -156,18 +160,63 @@ class SubmissionController {
         }
 
         $submiss->id = $id;
-        $mailS = new MailService();
-        $mailS->sendConfirmation($submiss, $user);
-        $mailS->sendLVR($submiss, $user);
+        Response::json(['id' => $id], 202);
+        
+        if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+            fastcgi_finish_request();
+        } else {
+            error_log("does not exist. Try using php-fpm");
+        }
 
-        Response::json(['id' => $id]);
+        $confirmationError = null;
+        $lvrError = null;
+        $errors = [];
+        $mailService = new MailService();
+
+        $pool = Pool::create();
+
+        $pool->add(function () use ($submiss, $user, $mailService) {
+            $mailService->sendConfirmation($submiss, $user);
+            return true;
+        })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
+            error_log("Error sending confirmation mail for submission {$submiss->id}: " . $exception->getMessage());
+            $errors[$submiss->id]['lvr'] = $exception;
+        });
+
+        $pool->add(function () use ($submiss, $user, $mailService) {
+            $mailService->sendLVR($submiss, $user);
+            return true;
+        })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
+            error_log("Error sending LVR mail for submission {$submiss->id}: " . $exception->getMessage());
+            $errors[$submiss->id]['lvr'] = $exception;
+        });
+        
+        $pool->wait();
+        
+        $sent = new SentInfo(
+            $confirmationError === null,
+            $lvrError === null
+        );
+        $submiss->sentInfo = $sent;
+        $ok = $repo->updateSent($id, $sent);
+        if (!$ok) {
+            error_log("Fehler beim updaten des Sendens in der DB");
+        }
     }
 
     private function get(Request $request): void {
         $repo = new SubmissionDatabase();
 
+        $headers = $request->header();        
+        $auth = new AuthController();
+        $userId = $auth->getUserId($headers['Authorization'] ?? '');
+        if ($userId < 0) {
+            // AuthController::getUserId() may have already sent a 401 response  
+            return;
+        }
+
         $parts = explode('/', $request->path());
-        if (\count($parts) > 3) {
+        if (\count($parts) > 3) { //suche via submission id
             $id = \intval($parts[3]);
             $submission = $repo->getById($id);
             if (!$submission) {
@@ -176,21 +225,137 @@ class SubmissionController {
                 ], 404);
                 return;
             }
+            //Prüfen, ob die submission dem User wirklich gehört
+            if ($submission->user_id !== $userId) {
+                Response::json([
+                    'message' => 'Forbidden'
+                ], 403);
+                return;
+            }
+
+            if ($submission->sentInfo !== null) {
+                $accountdb = new AccountDatabase();
+                $account = $accountdb->getById($userId);
+                $errors = [];
+
+                $pool = Pool::create();
+
+                $this->tryResending($submission, $account, $pool, $errors);
+            }
             Response::json($submission);
+
+            if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+                fastcgi_finish_request();
+            } else {
+                error_log("does not exist. Try using php-fpm");
+            }
+
+            if (isset($pool)) {
+                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
+                $lvrError = $errors[$submission->id]['lvr'] ?? null;
+
+                $pool->wait();
+                $sent = new SentInfo(
+                    $confirmationError === null,
+                    $lvrError === null
+                );
+                // Preserve null state for properties still in progress
+                if (!is_null($submission->sentInfo) && (is_null($submission->sentInfo->confirmation) || is_null($submission->sentInfo->lvr))) {
+                    if (is_null($submission->sentInfo->lvr)) {
+                        $sent->lvr = null;
+                    }
+                    if (is_null($submission->sentInfo->confirmation)) {
+                        $sent->confirmation = null;
+                    }
+                }
+                $submission->sentInfo = $sent;
+                $ok = $repo->updateSent($id, $sent);
+                if (!$ok) {
+                    error_log("Error while writing into Database (check permissions)");
+                }
+            }
             return;
         } else {
-            $headers = $request->header();
-            $auth = new AuthController();
-            $userId = $auth->getUserId($headers['Authorization'] ?? '');
             $submissions = $repo->getAll($userId);
+
             if (!$submissions) {
                 Response::json([
                     'message' => 'No submissions found'
                 ], 404);
                 return;
             }
-            Response::json($submissions);
+
+            $pool = Pool::create();
+            $errors = []; // Track errors by submission ID
+            $accountdb = new AccountDatabase();
+            $account = $accountdb->getById($userId);
+
+            foreach ($submissions as $submission) {
+                $this->tryResending($submission, $account, $pool, $errors);
+            }
+
+            Response::json($submissions, 200);
+
+            if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
+                fastcgi_finish_request();
+            } else {
+                error_log("does not exist. Try using php-fpm");
+            }
+
+            $pool->wait();
+
+            foreach ($submissions as $submission) {
+                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
+                $lvrError = $errors[$submission->id]['lvr'] ?? null;
+                
+                $sent = new SentInfo(
+                    $confirmationError === null,
+                    $lvrError === null
+                );
+                if (
+                    $submission->sentInfo === null
+                    || $submission->sentInfo->confirmation !== $sent->confirmation
+                    || $submission->sentInfo->lvr !== $sent->lvr
+                ) {
+                    $submission->sentInfo = $sent;
+                    $repo->updateSent($submission->id, $sent);
+                }
+            }
+
             return;
         }
+    }
+
+    private function tryResending(Submission $submission, Account $account, Pool &$pool, array &$errors) {
+        $mailService = new MailService();
+
+        if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
+            if (is_null($submission->sentInfo->confirmation)) {
+                // nichts, weil die Submission noch dabei ist, die Email zu senden
+            } else if ($submission->sentInfo->confirmation == false) {
+                $pool->add(function () use ($submission, $account, $mailService) {
+                    $mailService->sendConfirmation($submission, $account);
+                    return true;
+                })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                    error_log("Error sending confirmation mail for submission {$submission->id}: " . $exception->getMessage());
+                    $errors[$submission->id]['confirmation'] = $exception;
+                });
+            }
+        }
+
+        if ($submission->sentInfo !== null && $submission->sentInfo->lvr != true) {
+            if (is_null($submission->sentInfo->lvr)) {
+                // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+            } else if ($submission->sentInfo->lvr == false) {
+                $pool->add(function () use ($submission, $account, $mailService) {
+                    $mailService->sendLVR($submission, $account);
+                    return true;
+                })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                    error_log("Error sending LVR mail for submission {$submission->id}: " . $exception->getMessage());
+                    $errors[$submission->id]['lvr'] = $exception;
+                });
+            }
+        }
+        return;
     }
 }

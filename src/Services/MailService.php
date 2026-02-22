@@ -7,15 +7,21 @@ use Core\ImageList;
 use Dotenv\Dotenv;
 use Models\Account;
 use Models\Submission;
+use Services\LocaleService;
 
 class MailService {
     private \Resend\Client $resend;
+    private string $devmail;
+    private string $mailSender;
+    //private LocaleService $localeService; //Wird nur gebraucht, wenn E-Mails wirklich an das LVR geschickt werden sollen
 
     public function __construct() {
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
-
         $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
+        $this->devmail = $_ENV['devmail'];
+        $this->mailSender = $_ENV['EMAIL_SENDER'];
+        //$this->localeService = new LocaleService(); //Wird nur gebraucht, wenn E-Mails wirklich an das LVR geschickt werden sollen
     }
 
     private function getEmailContentConfirmation(string $vorname, string $nachname, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {
@@ -136,7 +142,7 @@ class MailService {
 
     public function sendConfirmation(Submission $submission, Account $account): void {
         $this->resend->emails->send([
-            'from'    => $_ENV['EMAIL_SENDER'],
+            'from'    => $this->mailSender,
             'to'      => $account->email,
             'subject' => "Fundbeleg - {$submission->date} hinzugefügt",
             'html'    => $this->getEmailContentConfirmation(
@@ -226,11 +232,10 @@ class MailService {
     }
 
     public function sendLVR(Submission $submission, Account $account): void{
-        $localeService = new LocaleService();
         $timestamp = \IntlDateFormatter::formatObject(new \DateTime(), "d. MMMM yyyy, HH:mm 'Uhr'", 'de_DE');
         $this->resend->emails->send([
-            'from'    => $_ENV['EMAIL_SENDER'],
-            'to'      => $localeService->dev(),//$localeService->getnearestemail($submission->coordinate),
+            'from'    => $this->mailSender,
+            'to'      => $this->devmail, //oder halt $this->localeservice->getNearestEmail($submission->coordinate);
             'subject' => "Neuer Fund am - {$timestamp} eingegangen",
             'html'    => $this->getEmailContentLVR(
                 $account->vorname,

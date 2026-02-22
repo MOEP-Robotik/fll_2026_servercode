@@ -7,6 +7,7 @@ use Core\Database;
 use Models\Coordinate;
 use Models\Submission;
 use Models\Size;
+use Models\SentInfo;
 
 class SubmissionDatabase {
     private $db;
@@ -16,6 +17,7 @@ class SubmissionDatabase {
     }
 
     public function create(Submission $data): int {
+        //sentInfo muss nicht hier sein, weil das im Normalfall nicht existieren sollte
         $stmt = $this->db->prepare(
             "INSERT INTO submissions (location, date, size, comment, count, datierung, files, material, user_id) VALUES (:l, :dt, :s, :cm, :cn, :dg, :f, :m, :u)"
         );
@@ -41,19 +43,20 @@ class SubmissionDatabase {
 
     //returns Array with Submissions
     public function getAll(int $userId): array {
-        $userquery = $this->db->query("SELECT funde FROM users WHERE id = :id LIMIT 1");
+        $userquery = $this->db->prepare("SELECT funde FROM users WHERE id = :id LIMIT 1");
         $userquery->execute([
             ':id' => $userId
         ]);
         $row = $userquery->fetch();
         if (!$row) {
-            error_log("WTF (siehe SubmissionDatabase Z.47");
+            error_log("User not found in getAll: userId=$userId");
             return [];
         }
+        
         $rows = [];
         $funde = json_decode($row['funde'], true);
         
-        $stmt = $this->db->query("SELECT * FROM submissions WHERE id = :id LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM submissions WHERE id = :id LIMIT 1");
         foreach ($funde as $fund) {
             $stmt->execute([
                 ":id" => $fund
@@ -86,6 +89,16 @@ class SubmissionDatabase {
             $submission->size = $size;
             $submission->timestamp = (string)$row['created_at'];
             $submission->user_id = (int)$row['user_id'];
+
+            if ($row['sent'] !== null) {
+                $sentdata = json_decode($row['sent'], true);
+                $submission->sentInfo = new SentInfo(
+                    $sentdata['confirmation'] ?? false,
+                    $sentdata['lvr'] ?? false
+                );
+            } else {
+                $submission->sentInfo = null;
+            }
 
             $submissions[] = $submission;
         }
@@ -127,6 +140,28 @@ class SubmissionDatabase {
         $submission->timestamp = (string)$row['created_at'];
         $submission->user_id = (int)$row['user_id'];
 
+        if ($row['sent'] !== null) {
+            $sentdata = json_decode($row['sent'], true);
+            $submission->sentInfo = new SentInfo(
+                $sentdata['confirmation'] ?? false,
+                $sentdata['lvr'] ?? false
+            );
+        } else {
+            $submission->sentInfo = null;
+        }
+
         return $submission;
+    }
+
+    public function updateSent (int $id, SentInfo $sent): bool {
+        if ($this->getById($id) === false) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare("UPDATE submissions SET sent = :sent WHERE id = :id");
+        return $stmt->execute([
+            ':sent' => $sent->toJSON(),
+            ':id' => $id
+        ]);
     }
 }
