@@ -173,21 +173,23 @@ class SubmissionController {
         $lvrError = null;
 
         $pool = Pool::create();
-        
-        $pool->add(function() use ($mailService, $submiss, $user) {
-            $mailService->sendConfirmation($submiss, $user);
-            return true;
-        })->catch(function(\Throwable $exception) use (&$confirmationError) {
-            error_log("Error sending confirmation mail: " . $exception->getMessage());
-            $confirmationError = $exception;
-        });
-        
-        $pool->add(function() use ($mailService, $submiss, $user) {
+
+        $pool->add(function () use ($submiss, $user) {
+            $mailService = new MailService();
             $mailService->sendLVR($submiss, $user);
             return true;
-        })->catch(function(\Throwable $exception) use (&$lvrError) {
-            error_log("Error sending LVR mail: " . $exception->getMessage());
-            $lvrError = $exception;
+        })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
+            error_log("Error sending confirmation mail for submission {$submiss->id}: " . $exception->getMessage());
+            $errors[$submiss->id]['lvr'] = $exception;
+        });
+
+        $pool->add(function () use ($submiss, $user) {
+            $mailService = new MailService();
+            $mailService->sendLVR($submiss, $user);
+            return true;
+        })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
+            error_log("Error sending LVR mail for submission {$submiss->id}: " . $exception->getMessage());
+            $errors[$submiss->id]['lvr'] = $exception;
         });
         
         $pool->wait();
@@ -210,6 +212,10 @@ class SubmissionController {
         $headers = $request->header();        
         $auth = new AuthController();
         $userId = $auth->getUserId($headers['Authorization'] ?? '');
+        if ($userId < 0) {
+            // AuthController::getUserId() may have already sent a 401 response  
+            return;
+        }
 
         $parts = explode('/', $request->path());
         if (\count($parts) > 3) { //suche via submission id
@@ -229,9 +235,7 @@ class SubmissionController {
                 return;
             }
 
-            if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
-                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
-                $lvrError = $errors[$submission->id]['lvr'] ?? null;
+            if ($submission->sentInfo !== null) {
                 $accountdb = new AccountDatabase();
                 $account = $accountdb->getById($userId);
                 $errors = [];
@@ -249,18 +253,21 @@ class SubmissionController {
             }
 
             if (isset($pool)) {
+                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
+                $lvrError = $errors[$submission->id]['lvr'] ?? null;
+
                 $pool->wait();
                 $sent = new SentInfo(
                     $confirmationError === null,
                     $lvrError === null
                 );
-                if (!is_null($submission->sentInfo) && is_null($submission->sentInfo->confirmation) or is_null($submission->sentInfo->lvr == null)) {
+                // Preserve null state for properties still in progress
+                if (!is_null($submission->sentInfo) && (is_null($submission->sentInfo->confirmation) || is_null($submission->sentInfo->lvr))) {
                     if (is_null($submission->sentInfo->lvr)) {
                         $sent->lvr = null;
-                    } else if (is_null($submission->sentInfo->confirmation)) {
+                    }
+                    if (is_null($submission->sentInfo->confirmation)) {
                         $sent->confirmation = null;
-                    } else {
-                        error_log("WTF line 287 in SubmissionController");
                     }
                 }
                 $submission->sentInfo = $sent;
@@ -322,13 +329,12 @@ class SubmissionController {
     }
 
     private function tryResending(Submission $submission, Account $account, Pool &$pool, array &$errors) {
-        $mailService = new MailService();
-
         if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
             if (is_null($submission->sentInfo->confirmation)) {
                 // nichts, weil die Submission noch dabei ist, die Email zu senden
             } else if ($submission->sentInfo->confirmation == false) {
-                $pool->add(function () use ($mailService, $submission, $account) {
+                $pool->add(function () use ($submission, $account) {
+                    $mailService = new MailService();
                     $mailService->sendConfirmation($submission, $account);
                     return true;
                 })->catch(function (\Throwable $exception) use (&$errors, $submission) {
@@ -342,7 +348,8 @@ class SubmissionController {
             if (is_null($submission->sentInfo->lvr)) {
                 // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
             } else if ($submission->sentInfo->lvr == false) {
-                $pool->add(function () use ($mailService, $submission, $account) {
+                $pool->add(function () use ($submission, $account) {
+                    $mailService = new MailService();
                     $mailService->sendLVR($submission, $account);
                     return true;
                 })->catch(function (\Throwable $exception) use (&$errors, $submission) {

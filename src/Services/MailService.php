@@ -13,7 +13,7 @@ class MailService {
     private \Resend\Client $resend;
     private string $devmail;
     private string $mailSender;
-    private LocaleService $localeService;
+    //private LocaleService $localeService; //Wird nur gebraucht, wenn E-Mails wirklich an das LVR geschickt werden sollen
 
     public function __construct() {
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
@@ -22,7 +22,7 @@ class MailService {
         $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
         $this->devmail = $_ENV['devmail'];
         $this->mailSender = $_ENV['EMAIL_SENDER'];
-        $this->localeService = new LocaleService();
+        //$this->localeService = new LocaleService(); //Wird nur gebraucht, wenn E-Mails wirklich an das LVR geschickt werden sollen
     }
 
     private function getEmailContentConfirmation(string $vorname, string $nachname, string $coordinate, string $date, string $email, string $telephone, string $plz, string $timestamp): string {

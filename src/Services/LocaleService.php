@@ -13,10 +13,4 @@ class LocaleService {
         $gemeinde = $gemeindeserv->getGemeinde($cords);
         return $gemeinden[$gemeinde]['email'];
     }
-    public function dev(): string {
-        $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
-        $dotenv->load();
-        $email = $_ENV['devmail'];
-        return $email;
-    }
 }

@@ -85,7 +85,7 @@ class SubmissionDatabase {
             $submission->comment = (string)$row['comment'];
             $submission->datierung = (string)$row['datierung'];
             $submission->files = $row['files'] ?? null;
-            $submission->material = $row['material'] ?? "";
+            $submission->material = $row['material'];
             $submission->size = $size;
             $submission->timestamp = (string)$row['created_at'];
             $submission->user_id = (int)$row['user_id'];
@@ -154,11 +154,14 @@ class SubmissionDatabase {
     }
 
     public function updateSent (int $id, SentInfo $sent): bool {
+        if ($this->getById($id) === false) {
+            return false;
+        }
+
         $stmt = $this->db->prepare("UPDATE submissions SET sent = :sent WHERE id = :id");
-        $stmt->execute([
+        return $stmt->execute([
             ':sent' => $sent->toJSON(),
-            ':id'=> $id
+            ':id' => $id
         ]);
-        return $stmt->rowCount() > 0;
     }
 }
