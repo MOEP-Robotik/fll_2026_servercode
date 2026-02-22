@@ -4,7 +4,6 @@ namespace Services;
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Models\Coordinate;
-use Dotenv\Dotenv;
 
 class LocaleService {
     public function getNearestEmail(Coordinate $cords): string {

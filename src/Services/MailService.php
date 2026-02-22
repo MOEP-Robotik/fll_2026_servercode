@@ -18,7 +18,6 @@ class MailService {
     public function __construct() {
         $dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
         $dotenv->load();
-
         $this->resend = \Resend::client($_ENV['RESEND_API_KEY']);
         $this->devmail = $_ENV['devmail'];
         $this->mailSender = $_ENV['EMAIL_SENDER'];

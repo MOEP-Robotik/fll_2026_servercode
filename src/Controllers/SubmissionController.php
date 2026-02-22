@@ -3,6 +3,7 @@ namespace Controllers;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
+use Dotenv\Dotenv;
 use Core\Auth;
 use Core\Request;
 use Core\Response;
@@ -166,25 +167,23 @@ class SubmissionController {
         } else {
             error_log("does not exist. Try using php-fpm");
         }
-        
-        $mailService = new MailService();
 
         $confirmationError = null;
         $lvrError = null;
+        $errors = [];
+        $mailService = new MailService();
 
         $pool = Pool::create();
 
-        $pool->add(function () use ($submiss, $user) {
-            $mailService = new MailService();
-            $mailService->sendLVR($submiss, $user);
+        $pool->add(function () use ($submiss, $user, $mailService) {
+            $mailService->sendConfirmation($submiss, $user);
             return true;
         })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
             error_log("Error sending confirmation mail for submission {$submiss->id}: " . $exception->getMessage());
             $errors[$submiss->id]['lvr'] = $exception;
         });
 
-        $pool->add(function () use ($submiss, $user) {
-            $mailService = new MailService();
+        $pool->add(function () use ($submiss, $user, $mailService) {
             $mailService->sendLVR($submiss, $user);
             return true;
         })->catch(function (\Throwable $exception) use (&$errors, $submiss) {
@@ -203,7 +202,6 @@ class SubmissionController {
         if (!$ok) {
             error_log("Fehler beim updaten des Sendens in der DB");
         }
-        Response::json(['id' => $id], 200);
     }
 
     private function get(Request $request): void {
@@ -329,12 +327,13 @@ class SubmissionController {
     }
 
     private function tryResending(Submission $submission, Account $account, Pool &$pool, array &$errors) {
+        $mailService = new MailService();
+
         if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
             if (is_null($submission->sentInfo->confirmation)) {
                 // nichts, weil die Submission noch dabei ist, die Email zu senden
             } else if ($submission->sentInfo->confirmation == false) {
-                $pool->add(function () use ($submission, $account) {
-                    $mailService = new MailService();
+                $pool->add(function () use ($submission, $account, $mailService) {
                     $mailService->sendConfirmation($submission, $account);
                     return true;
                 })->catch(function (\Throwable $exception) use (&$errors, $submission) {
@@ -348,8 +347,7 @@ class SubmissionController {
             if (is_null($submission->sentInfo->lvr)) {
                 // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
             } else if ($submission->sentInfo->lvr == false) {
-                $pool->add(function () use ($submission, $account) {
-                    $mailService = new MailService();
+                $pool->add(function () use ($submission, $account, $mailService) {
                     $mailService->sendLVR($submission, $account);
                     return true;
                 })->catch(function (\Throwable $exception) use (&$errors, $submission) {
