@@ -17,7 +17,7 @@ class SubmissionDatabase {
     }
 
     public function create(Submission $data): int {
-        //sentInfo muss nicht hier sein, weilo das im Normalfall nicht existieren sollte
+        //sentInfo muss nicht hier sein, weil das im Normalfall nicht existieren sollte
         $stmt = $this->db->prepare(
             "INSERT INTO submissions (location, date, size, comment, count, datierung, files, material, user_id) VALUES (:l, :dt, :s, :cm, :cn, :dg, :f, :m, :u)"
         );
@@ -159,10 +159,6 @@ class SubmissionDatabase {
             ':sent' => $sent->toJSON(),
             ':id'=> $id
         ]);
-        $row = $stmt->fetch();
-        if (!$row) {
-            return false;
-        }
-        return true;
+        return $stmt->rowCount() > 0;
     }
 }

@@ -15,6 +15,7 @@ use Models\Size;
 use Controllers\ImageController;
 use Spatie\Async\Pool;
 use Models\SentInfo;
+use Models\Account;
 
 class SubmissionController {
     public function submit(Request $request): void {
@@ -196,7 +197,11 @@ class SubmissionController {
             $lvrError === null
         );
         $submiss->sentInfo = $sent;
-        $repo->updateSent($id, $sent);
+        $ok = $repo->updateSent($id, $sent);
+        if (!$ok) {
+            error_log("Fehler beim updaten des Sendens in der DB");
+        }
+        Response::json(['id' => $id], 200);
     }
 
     private function get(Request $request): void {
@@ -216,42 +221,24 @@ class SubmissionController {
                 ], 404);
                 return;
             }
+            //Prüfen, ob die submission dem User wirklich gehört
+            if ($submission->user_id !== $userId) {
+                Response::json([
+                    'message' => 'Forbidden'
+                ], 403);
+                return;
+            }
 
-            if ($submission->sentInfo->confirmation != true) {
-
-                $mailService = new MailService();
-                $confirmationError = null;
-                $lvrError = null;
+            if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
+                $confirmationError = $errors[$submission->id]['confirmation'] ?? null;
+                $lvrError = $errors[$submission->id]['lvr'] ?? null;
                 $accountdb = new AccountDatabase();
-                $user = $accountdb->getById($userId);
+                $account = $accountdb->getById($userId);
+                $errors = [];
 
                 $pool = Pool::create();
 
-                if (is_null($submission->sentInfo->confirmation)) {
-                    //nichts, weil die Submission noch dabei ist, die Email zu senden
-                } else if ($submission->sentInfo->confirmation == false) {
-                    $pool->add(function () use ($mailService, $submission, $user) {
-                        $mailService->sendConfirmation($submission, $user);
-                        return true;
-                    })->catch(function (\Throwable $exception) use (&$confirmationError) {
-                        error_log("Error sending confirmation mail: " . $exception->getMessage());
-                        $confirmationError = $exception;
-                    });
-                }
-
-                if ($submission->sentInfo->lvr != true) {
-                    if (is_null($submission->sentInfo->lvr)) {
-                        //nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
-                    } else if ($submission->sentInfo->lvr == false) {
-                        $pool->add(function () use ($mailService, $submission, $user) {
-                            $mailService->sendLVR($submission, $user);
-                            return true;
-                        })->catch(function (\Throwable $exception) use (&$lvrError) {
-                            error_log("Error sending LVR mail: " . $exception->getMessage());
-                            $lvrError = $exception;
-                        });
-                    }
-                }
+                $this->tryResending($submission, $account, $pool, $errors);
             }
             Response::json($submission);
 
@@ -267,8 +254,20 @@ class SubmissionController {
                     $confirmationError === null,
                     $lvrError === null
                 );
+                if (!is_null($submission->sentInfo) && is_null($submission->sentInfo->confirmation) or is_null($submission->sentInfo->lvr == null)) {
+                    if (is_null($submission->sentInfo->lvr)) {
+                        $sent->lvr = null;
+                    } else if (is_null($submission->sentInfo->confirmation)) {
+                        $sent->confirmation = null;
+                    } else {
+                        error_log("WTF line 287 in SubmissionController");
+                    }
+                }
                 $submission->sentInfo = $sent;
-                $repo->updateSent($id, $sent);
+                $ok = $repo->updateSent($id, $sent);
+                if (!$ok) {
+                    error_log("Error while writing into Database (check permissions)");
+                }
             }
             return;
         } else {
@@ -282,45 +281,15 @@ class SubmissionController {
             }
 
             $pool = Pool::create();
-            $mailService = new MailService();
             $errors = []; // Track errors by submission ID
-            $mailService = new MailService();
             $accountdb = new AccountDatabase();
             $account = $accountdb->getById($userId);
 
-            $pool = Pool::create();
-
             foreach ($submissions as $submission) {
-                if ($submission->sentInfo->confirmation != true) {
-                    if (is_null($submission->sentInfo->confirmation)) {
-                        // nichts, weil die Submission noch dabei ist, die Email zu senden
-                    } else if ($submission->sentInfo->confirmation == false) {
-                        $pool->add(function () use ($mailService, $submission, $account) {
-                            $mailService->sendConfirmation($submission, $account);
-                            return true;
-                        })->catch(function (\Throwable $exception) use (&$errors, $submission) {
-                            error_log("Error sending confirmation mail for submission {$submission->id}: " . $exception->getMessage());
-                            $errors[$submission->id]['confirmation'] = $exception;
-                        });
-                    }
-                }
-
-                if ($submission->sentInfo->lvr != true) {
-                    if (is_null($submission->sentInfo->lvr)) {
-                        // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
-                    } else if ($submission->sentInfo->lvr == false) {
-                        $pool->add(function () use ($mailService, $submission, $account) {
-                            $mailService->sendLVR($submission, $account);
-                            return true;
-                        })->catch(function (\Throwable $exception) use (&$errors, $submission) {
-                            error_log("Error sending LVR mail for submission {$submission->id}: " . $exception->getMessage());
-                            $errors[$submission->id]['lvr'] = $exception;
-                        });
-                    }
-                }
+                $this->tryResending($submission, $account, $pool, $errors);
             }
 
-            Response::json($submissions);
+            Response::json($submissions, 200);
 
             if (function_exists('fastcgi_finish_request')) { //funktioniert nur mit php-fpm
                 fastcgi_finish_request();
@@ -338,11 +307,46 @@ class SubmissionController {
                     $confirmationError === null,
                     $lvrError === null
                 );
-                $submission->sentInfo = $sent;
-                $repo->updateSent($submission->id, $sent);
+                if ($submission->sentInfo !== $sent) {
+                    $submission->sentInfo = $sent;
+                    $repo->updateSent($submission->id, $sent);
+                }
             }
 
             return;
         }
+    }
+
+    private function tryResending(Submission $submission, Account $account, Pool &$pool, array &$errors) {
+        $mailService = new MailService();
+
+        if ($submission->sentInfo !== null && $submission->sentInfo->confirmation != true) {
+            if (is_null($submission->sentInfo->confirmation)) {
+                // nichts, weil die Submission noch dabei ist, die Email zu senden
+            } else if ($submission->sentInfo->confirmation == false) {
+                $pool->add(function () use ($mailService, $submission, $account) {
+                    $mailService->sendConfirmation($submission, $account);
+                    return true;
+                })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                    error_log("Error sending confirmation mail for submission {$submission->id}: " . $exception->getMessage());
+                    $errors[$submission->id]['confirmation'] = $exception;
+                });
+            }
+        }
+
+        if ($submission->sentInfo !== null && $submission->sentInfo->lvr != true) {
+            if (is_null($submission->sentInfo->lvr)) {
+                // nichts, weil noch in irgendeinem Thread die E-Mail gesendet wird
+            } else if ($submission->sentInfo->lvr == false) {
+                $pool->add(function () use ($mailService, $submission, $account) {
+                    $mailService->sendLVR($submission, $account);
+                    return true;
+                })->catch(function (\Throwable $exception) use (&$errors, $submission) {
+                    error_log("Error sending LVR mail for submission {$submission->id}: " . $exception->getMessage());
+                    $errors[$submission->id]['lvr'] = $exception;
+                });
+            }
+        }
+        return;
     }
 }

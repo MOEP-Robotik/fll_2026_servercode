@@ -47,6 +47,7 @@ class ImageList {
     }
 
     private function createFromJSON(string | null $JSON): void {
+        //Es besteht die Möglichkeit, dass das ganz komisch encoded wird, weshalb dieses doppelte decoden nötig ist... Grade keine Zeit den Fehler zu suchen
         if ($JSON === null || $JSON === '' || $JSON === '[]') {
             $this->images = [];
             return;
