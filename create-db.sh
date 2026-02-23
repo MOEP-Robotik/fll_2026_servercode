@@ -25,7 +25,7 @@ touch "$DB_FILE"
 
 # --- PERMISSIONS ---
 echo "Setting permissions"
-chown -R "$(whoami)":"$(whoami)" "$DB_DIR"
+chown -R www-data:www-data "$DB_DIR"
 chmod 755 "$DB_DIR"
 chmod 644 "$DB_FILE"
 
