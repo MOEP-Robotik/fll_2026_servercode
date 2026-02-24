@@ -77,32 +77,32 @@ class ImageList {
         return $paths;
     }
 
-    public function convertImgs($compression = 0): bool {
+    public function convertImgs($compression = 100): bool {
         $newImages = [];
 
         foreach ($this->images as $img) {
             $image = new Imagick($img->filepath);
-            $image->setImageFormat('tif');
+            $image->setImageFormat('jpeg');
             $image->setCompressionQuality($compression);
 
-            $tifPath = $img->folderpath . $img->UUID . '.tif';
+            $jpgpath = $img->folderpath . $img->UUID . '.jpg';
 
             try {
-                $image->writeImage($tifPath);
+                $image->writeImage($jpgpath);
 
                 $image->clear();
                 $image->destroy();
 
-                $tifFilesize = filesize($tifPath);
+                $jpgFilesize = filesize($jpgpath);
 
-                $tifImg = Image::fromJSON([
+                $jpgImg = Image::fromJSON([
                     'UUID' => $img->UUID,
-                    'filepath' => $tifPath,
-                    'mimetype' => 'image/tif',
-                    'filesize' => $tifFilesize,
+                    'filepath' => $jpgpath,
+                    'mimetype' => 'image/jpeg',
+                    'filesize' => $jpgFilesize,
                 ]);
 
-                $newImages[] = $tifImg;
+                $newImages[] = $jpgImg;
 
                 if (file_exists($img->filepath)) {
                     unlink($img->filepath);

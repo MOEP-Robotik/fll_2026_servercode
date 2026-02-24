@@ -167,7 +167,7 @@ class MailService {
                         <p>Sehr geehrte Damen und Herren,</p>
                 
                         <p>
-                        Eine neue Fundmeldung ist soeben in unserem System eingegangen. Hier sind die Informationen. Im Anhang finden Sie die Daten in Form einer ".csv"-Datei und die Bilder, falls welche vorhanden sind, im ".tif"-Format.
+                        Eine neue Fundmeldung ist soeben in unserem System eingegangen. Hier sind die Informationen. Im Anhang finden Sie die Daten in Form einer ".csv"-Datei und die Bilder, falls welche vorhanden sind, im ".jpg"-Format.
                         </p>
                 
                         <p>
