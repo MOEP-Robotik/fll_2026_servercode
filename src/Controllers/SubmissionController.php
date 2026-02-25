@@ -127,7 +127,7 @@ class SubmissionController {
         $submiss = new Submission();
         $submiss->coordinate = $coordinate;
         $submiss->date = $data['date'] ?? null;
-        $submiss->count =$data['count'] ?? 1;
+        $submiss->count = $data['count'] ?? 1;
         $submiss->files = $data['files'] ?? null;
         $submiss->material = $data['material'] ?? ""; 
         $submiss->user_id = $user_id;

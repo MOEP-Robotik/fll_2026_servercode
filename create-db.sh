@@ -36,30 +36,20 @@ echo "Creating tables (if not exist)"
 # --- sent ist ein Objekt mit 2 bools
 sqlite3 "$DB_FILE" <<'SQL'
 CREATE TABLE IF NOT EXISTS submissions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    location TEXT,
-    date TEXT,
-    size TEXT,
-    comment TEXT,
-    count INTEGER,
-    datierung TEXT,
-    files TEXT,
-    material TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    sent TEXT,
-    user_id INTEGER,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  location TEXT,
+  date TEXT,
+  size TEXT,
+  comment TEXT,
+  count INTEGER,
+  datierung TEXT,
+  files TEXT,
+  material TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  sent TEXT,
+  user_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
-CREATE TABLE IF NOT EXISTS analysis (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    submission_id INTEGER NOT NULL,
-    material TEXT,
-    confidence REAL,
-    notes TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (submission_id) REFERENCES submissions(id)
-); 
 
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
